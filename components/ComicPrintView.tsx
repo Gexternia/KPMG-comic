@@ -60,7 +60,6 @@ export const ComicPrintView: React.FC<ComicPrintViewProps> = ({ comic, data, onR
         <div className="bg-white border-4 border-black p-2 shadow-[8px_8px_0px_0px_rgba(255,255,255,0.2)]">
             <h3 className="comic-title text-center text-xl mb-2">PORTADA</h3>
             {comic.cover && <img src={comic.cover} className="w-full border-2 border-black" alt="Portada" />}
-            <h2 className="text-3xl comic-title text-center mt-2 text-red-600" style={{ fontFamily: "'KPMGBold', 'Arial Black', sans-serif" }}>{`${data.userName.toUpperCase()} EN KPMG`}</h2>
         </div>
 
         {/* Page 1 */}
@@ -113,7 +112,7 @@ export const ComicPrintView: React.FC<ComicPrintViewProps> = ({ comic, data, onR
         <div className="bg-white border-4 border-black p-2 shadow-[8px_8px_0px_0px_rgba(255,255,255,0.2)]">
             <h3 className="comic-title text-center text-xl mb-2">CONTRAPORTADA</h3>
             {comic.backCover && <img src={comic.backCover} className="w-full border-2 border-black" alt="Back" />}
-            <h2 className="text-4xl comic-title text-center mt-2" style={{ fontFamily: "'KPMGBold', 'Arial Black', sans-serif" }}>FIN</h2>
+            <h2 className="text-4xl comic-title text-center mt-6" style={{ fontFamily: "'KPMGBold', 'Arial Black', sans-serif" }}>FIN</h2>
         </div>
 
         <div className="h-10"></div>
@@ -135,11 +134,7 @@ export const ComicPrintView: React.FC<ComicPrintViewProps> = ({ comic, data, onR
         {/* 1. TOP LEFT: PORTADA (Inverted) */}
         <div className="border-r-2 border-b-2 border-black relative overflow-hidden flex flex-col items-center justify-center bg-blue-100 rotate-180">
           {comic.cover && <img src={comic.cover} alt="Cover" className="w-full h-full object-cover" />}
-          <div className="absolute top-8 w-full text-center px-2">
-            <h1 className="text-5xl comic-title text-red-600 drop-shadow-[2px_2px_0px_rgba(0,0,0,1)] stroke-black leading-none" style={{ WebkitTextStroke: '1px black', fontFamily: "'KPMGBold', 'Arial Black', sans-serif" }}>
-              {`${data.userName.toUpperCase()} EN KPMG`}
-            </h1>
-          </div>
+
           <div className="absolute bottom-2 right-2 bg-black text-white px-2 py-0.5 text-xs font-bold">#1</div>
         </div>
 
@@ -158,7 +153,7 @@ export const ComicPrintView: React.FC<ComicPrintViewProps> = ({ comic, data, onR
         {/* 4. TOP RIGHT: BACK COVER (Inverted) */}
         <div className="border-b-2 border-black relative overflow-hidden flex flex-col items-center justify-center bg-[#00338D] rotate-180">
            {comic.backCover && <img src={comic.backCover} alt="Back Cover" className="w-full h-full object-cover opacity-80" />}
-           <div className="absolute inset-0 flex items-center justify-center">
+           <div className="absolute inset-x-0 bottom-12 flex justify-center">
              <h2 className="text-6xl comic-title text-white drop-shadow-[3px_3px_0px_rgba(0,0,0,1)]" style={{ fontFamily: "'KPMGBold', 'Arial Black', sans-serif" }}>FIN</h2>
            </div>
         </div>
