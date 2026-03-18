@@ -1,0 +1,7 @@
+{
+  "name": "KPMG",
+  "description": "Interactive kiosk app that generates a personalized 4-panel comic zine using Gemini AI.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
