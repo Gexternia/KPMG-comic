@@ -35,36 +35,36 @@ export const StepCamera: React.FC<StepCameraProps> = ({ onCapture }) => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-full space-y-6 animate-fade-in">
-      <h2 className="text-4xl md:text-5xl comic-title text-center mb-4 bg-white border-4 border-black px-6 py-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+    <div className="flex flex-col items-center justify-center h-full p-4 space-y-6 animate-fade-in w-full">
+      <h2 className="text-3xl md:text-5xl comic-title text-center mb-4 bg-white border-4 border-black px-4 md:px-6 py-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] max-w-[90vw]">
         IDENTIFICA AL PROTAGONISTA
       </h2>
       
-      <div className="relative border-8 border-black bg-black rounded-sm shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] overflow-hidden">
+      <div className="relative border-4 md:border-8 border-black bg-black rounded-sm shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] md:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] overflow-hidden w-[90vw] md:w-[400px] aspect-square max-w-[400px]">
         {imgSrc ? (
-          <img src={imgSrc} alt="Captured" className="w-[400px] h-[400px] object-cover" />
+          <img src={imgSrc} alt="Captured" className="w-full h-full object-cover" />
         ) : (
           <Webcam
             audio={false}
             ref={webcamRef}
             screenshotFormat="image/jpeg"
             videoConstraints={videoConstraints}
-            className="w-[400px] h-[400px] object-cover"
+            className="w-full h-full object-cover aspect-square"
           />
         )}
       </div>
 
-      <div className="flex gap-4 mt-8">
+      <div className="flex flex-col sm:flex-row gap-4 mt-6 md:mt-8 w-[90vw] md:w-auto max-w-[400px]">
         {!imgSrc ? (
-          <Button onClick={capture} variant="primary">
+          <Button onClick={capture} variant="primary" className="w-full flex justify-center text-lg md:text-xl py-3 md:py-4">
             <Camera className="mr-2 w-6 h-6" /> TOMAR FOTO
           </Button>
         ) : (
           <>
-            <Button onClick={retake} variant="secondary">
+            <Button onClick={retake} variant="secondary" className="w-full flex justify-center text-lg md:text-xl py-3 md:py-4">
               <RefreshCw className="mr-2 w-6 h-6" /> REPETIR
             </Button>
-            <Button onClick={confirm} variant="primary">
+            <Button onClick={confirm} variant="primary" className="w-full flex justify-center text-lg md:text-xl py-3 md:py-4">
               <Check className="mr-2 w-6 h-6" /> CONTINUAR
             </Button>
           </>

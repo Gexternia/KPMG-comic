@@ -1,4 +1,4 @@
-import { GoogleGenAI, SchemaType } from "@google/genai";
+import { GoogleGenAI} from "@google/genai";
 import { 
   MODEL_NAME, 
   TEXT_MODEL_NAME,
