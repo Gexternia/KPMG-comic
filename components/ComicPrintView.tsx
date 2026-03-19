@@ -124,8 +124,8 @@ export const ComicPrintView: React.FC<ComicPrintViewProps> = ({ comic, data, onR
       <div 
         className="hidden print:grid fixed inset-0 bg-white"
         style={{
-          width: '297mm',
-          height: '210mm',
+          width: '100vw',
+          height: '100vh',
           gridTemplateColumns: 'repeat(4, 1fr)',
           gridTemplateRows: 'repeat(2, 1fr)',
           pageBreakAfter: 'avoid'
@@ -133,7 +133,7 @@ export const ComicPrintView: React.FC<ComicPrintViewProps> = ({ comic, data, onR
       >
         {/* 1. TOP LEFT: PORTADA (Inverted) */}
         <div className="border-r-2 border-b-2 border-black relative overflow-hidden flex flex-col items-center justify-center bg-blue-100 rotate-180">
-          {comic.cover && <img src={comic.cover} alt="Cover" className="w-full h-full object-cover" />}
+          {comic.cover && <img src={comic.cover} alt="Cover" className="w-full h-full object-cover scale-[1.08]" />}
 
           <div className="absolute bottom-2 right-2 bg-black text-white px-2 py-0.5 text-xs font-bold">#1</div>
         </div>
@@ -152,7 +152,7 @@ export const ComicPrintView: React.FC<ComicPrintViewProps> = ({ comic, data, onR
 
         {/* 4. TOP RIGHT: BACK COVER (Inverted) */}
         <div className="border-b-2 border-black relative overflow-hidden flex flex-col items-center justify-center bg-[#00338D] rotate-180">
-           {comic.backCover && <img src={comic.backCover} alt="Back Cover" className="w-full h-full object-cover opacity-80" />}
+           {comic.backCover && <img src={comic.backCover} alt="Back Cover" className="w-full h-full object-cover opacity-80 scale-[1.08]" />}
            <div className="absolute inset-x-0 bottom-12 flex justify-center">
              <h2 className="text-6xl comic-title text-white drop-shadow-[3px_3px_0px_rgba(0,0,0,1)]" style={{ fontFamily: "'KPMGBold', 'Arial Black', sans-serif" }}>FIN</h2>
            </div>
@@ -160,36 +160,36 @@ export const ComicPrintView: React.FC<ComicPrintViewProps> = ({ comic, data, onR
 
         {/* 5. BOTTOM LEFT: PAGE 1 */}
         <div className="border-r-2 border-t-2 border-black relative overflow-hidden flex flex-col items-center justify-center bg-white">
-           {comic.p1 && <img src={comic.p1} alt="Page 1" className="w-full h-full object-cover" />}
-           <div className="absolute top-2 left-2 right-2 bg-white border-2 border-black p-2 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                <p className="text-sm font-bold font-comic leading-tight">{comic.captions.p1}</p>
+           {comic.p1 && <img src={comic.p1} alt="Page 1" className="w-full h-full object-cover scale-[1.08]" />}
+           <div className="absolute top-2 left-2 right-2 bg-[#0091DA] border-2 border-black p-2 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                <p className="text-sm font-bold font-comic leading-tight text-white">{comic.captions.p1}</p>
             </div>
            <div className="absolute bottom-1 right-1 text-[10px] font-bold bg-white px-1 border border-black">1</div>
         </div>
 
         {/* 6. BOTTOM MID-LEFT: PAGE 2 */}
         <div className="border-r-2 border-t-2 border-black relative overflow-hidden flex flex-col items-center justify-center bg-white">
-           {comic.p2 && <img src={comic.p2} alt="Page 2" className="w-full h-full object-cover" />}
-           <div className="absolute bottom-6 left-2 right-2 bg-[#E6F4F4] border-2 border-black p-2 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                <p className="text-sm font-bold font-comic leading-tight">{comic.captions.p2}</p>
+           {comic.p2 && <img src={comic.p2} alt="Page 2" className="w-full h-full object-cover scale-[1.08]" />}
+           <div className="absolute bottom-6 left-2 right-2 bg-[#00A3A1] border-2 border-black p-2 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                <p className="text-sm font-bold font-comic leading-tight text-white">{comic.captions.p2}</p>
             </div>
            <div className="absolute bottom-1 right-1 text-[10px] font-bold bg-white px-1 border border-black">2</div>
         </div>
 
         {/* 7. BOTTOM MID-RIGHT: PAGE 3 */}
         <div className="border-r-2 border-t-2 border-black relative overflow-hidden flex flex-col items-center justify-center bg-[#EEF0F8]">
-           {comic.p3 && <img src={comic.p3} alt="Page 3" className="w-full h-full object-cover" />}
-           <div className="absolute bottom-6 left-2 right-2 bg-white border-2 border-black p-2 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                <p className="text-sm font-bold font-comic leading-tight uppercase">{comic.captions.p3}</p>
+           {comic.p3 && <img src={comic.p3} alt="Page 3" className="w-full h-full object-cover scale-[1.08]" />}
+           <div className="absolute bottom-6 left-2 right-2 bg-[#483698] border-2 border-black p-2 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                <p className="text-sm font-bold font-comic leading-tight uppercase text-white">{comic.captions.p3}</p>
             </div>
            <div className="absolute bottom-1 right-1 text-[10px] font-bold bg-white px-1 border border-black">3</div>
         </div>
 
         {/* 8. BOTTOM RIGHT: PAGE 4 */}
         <div className="border-l-0 border-t-2 border-black relative overflow-hidden flex flex-col items-center justify-center bg-[#00338D]">
-           {comic.p4 && <img src={comic.p4} alt="Page 4" className="w-full h-full object-cover opacity-90" />}
-           <div className="absolute top-6 left-4 right-4 bg-white border-2 border-black p-2 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] rounded-full">
-                <p className="text-sm font-bold font-comic leading-tight text-center italic">"{comic.captions.p4}"</p>
+           {comic.p4 && <img src={comic.p4} alt="Page 4" className="w-full h-full object-cover opacity-90 scale-[1.08]" />}
+           <div className="absolute top-6 left-4 right-4 bg-[#6D2077] border-2 border-black p-2 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] rounded-full">
+                <p className="text-sm font-bold font-comic leading-tight text-center italic text-white">"{comic.captions.p4}"</p>
             </div>
            <div className="absolute bottom-1 right-1 text-[10px] font-bold bg-white px-1 border border-black">4</div>
         </div>

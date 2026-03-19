@@ -71,14 +71,14 @@ function App() {
         return (
           <div className="flex flex-col items-center justify-center min-h-screen p-8 text-center space-y-8 animate-fade-in">
             <h1 className="text-6xl md:text-8xl comic-title text-white drop-shadow-[4px_4px_0px_rgba(255,255,255,0.5)]">
-              COMIC MAKE
+              MAKE YOUR HISTORY
             </h1>
             <p className="text-xl md:text-3xl font-bold max-w-2xl bg-white border-4 border-black p-4 md:p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transform -rotate-1">
-              ¡Convierte tu historia en KPMG en un fanzine épico al instante!
+              ¡Convierte tu historia en KPMG en un cómic único!
             </p>
             <div className="pt-8 w-full px-4 max-w-md md:max-w-none">
               <Button onClick={() => setStep(AppStep.CAMERA)} className="w-full md:w-auto text-lg md:text-2xl px-6 md:px-12 py-4 md:py-6 flex justify-center items-center">
-                COMENZAR TU HISTORIA <Zap className="ml-2 w-6 h-6 md:w-8 md:h-8 fill-yellow-300 flex-shrink-0" />
+                COMENZAR <Zap className="ml-2 w-6 h-6 md:w-8 md:h-8 fill-yellow-300 flex-shrink-0" />
               </Button>
             </div>
             

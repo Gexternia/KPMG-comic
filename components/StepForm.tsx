@@ -63,7 +63,7 @@ export const StepForm: React.FC<StepFormProps> = ({ initialData, onSubmit }) => 
         </div>
 
         <div>
-          <label className="block text-lg md:text-xl font-bold mb-2 comic-title uppercase">Tu peor momento en KPMG</label>
+          <label className="block text-lg md:text-xl font-bold mb-2 comic-title uppercase">Tu momento más dificil en KPMG</label>
           <input
             type="text"
             name="worstMoment"
