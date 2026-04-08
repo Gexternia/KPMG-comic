@@ -7,7 +7,12 @@ Style: American comic book style, modern, high contrast, bold black ink lines, h
 The character MUST closely resemble the person in the provided image.
 Background: stylized corporate consulting environment (glass offices, city skyline, presentation screens).
 Dominant colors: deep blues (#00338D), medium blues (#005EB8) and teal (#00A3A1) with classic comic black and white.
+<<<<<<< HEAD
 Aspect Ratio: Landscape 4:3. Edge-to-edge artwork (full bleed).
+=======
+Aspect Ratio: IMPORTANT! Generate a SQUARE (1:1 proportion) image.
+IMPORTANT: The artwork MUST bleed fully to all four edges. DO NOT include any white borders, comic book panel frames, letterboxing, or margins around the image.
+>>>>>>> 1fb525a7f2f2ec568b8670478f7ea9e00b6b2a96
 Any text appearing in the image (signs, screens, titles) MUST be in Spanish.
 `;
 
@@ -32,7 +37,11 @@ export const COVER_PROMPT_TEMPLATE = (userName: string) => `
 ${STYLE_PROMPT}
 Context: A comic book cover.
 Action: A heroic "Hero Shot" of the character looking confident and strong, maybe arms crossed or pointing forward.
-Text: The image should include the text "${userName.toUpperCase()} EN KPMG" integrated as a bold, stylish comic book title at the top.
+Text: The image MUST include a bold, stylish comic book title at the top center. To ensure it fits perfectly and does not get cropped horizontally, the title MUST be split into two lines:
+Line 1: "${userName.toUpperCase()} EN" (Make this line exceptionally LARGE, 25% larger than line 2)
+Line 2: "KPMG" (Make this line 25% smaller than line 1)
+Keep the text perfectly centered and leave wide clear margins on the left and right edges.
+IMPORTANT: DO NOT include any white borders, frames, or margins around the image. The artwork MUST bleed fully to the edges.
 `;
 
 // 2. Page 1: Dark Start

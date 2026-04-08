@@ -123,7 +123,7 @@ export const ComicPrintView: React.FC<ComicPrintViewProps> = ({ comic, onReset }
         <div className="bg-white border-4 border-black p-2 shadow-[8px_8px_0px_0px_rgba(255,255,255,0.2)] text-[#00338D]">
             <h3 className="comic-title text-center text-xl mb-2">CONTRAPORTADA</h3>
             {comic.backCover && <img src={comic.backCover} className="w-full border-2 border-black" alt="Back" />}
-            <h2 className="text-4xl comic-title text-center mt-2" style={{ fontFamily: "'KPMGBold', 'Arial Black', sans-serif" }}>FIN</h2>
+            <h2 className="text-4xl comic-title text-center mt-6" style={{ fontFamily: "'KPMGBold', 'Arial Black', sans-serif" }}>FIN</h2>
         </div>
 
         <div className="h-10"></div>
@@ -135,17 +135,30 @@ export const ComicPrintView: React.FC<ComicPrintViewProps> = ({ comic, onReset }
       <div 
         className="print-fanzine-layout hidden print:grid print:fixed print:inset-0 print:z-[100] print:box-border print:!bg-[#e8edf5]"
         style={{
+<<<<<<< HEAD
+=======
+          width: '100vw',
+          height: '100vh',
+>>>>>>> 1fb525a7f2f2ec568b8670478f7ea9e00b6b2a96
           gridTemplateColumns: 'repeat(4, 1fr)',
           gridTemplateRows: 'repeat(2, 1fr)',
           pageBreakAfter: 'avoid'
         }}
       >
+<<<<<<< HEAD
         {/* 1. PORTADA — estira a la celda (fill) para quitar bandas arriba/abajo; no recorte lateral como fill-height */}
         <div className={`min-h-0 min-w-0 border-r-2 border-b-2 border-black relative overflow-hidden ${PRINT_PANEL_BG} p-0 rotate-180`}>
           {comic.cover && (
             <img src={comic.cover} alt="Cover" className="print-ia-cover-stretch z-0" />
           )}
           <div className="absolute bottom-2 right-2 z-10 bg-black text-white px-2 py-0.5 text-xs font-bold">#1</div>
+=======
+        {/* 1. TOP LEFT: PORTADA (Inverted) */}
+        <div className="border-r-2 border-b-2 border-black relative overflow-hidden flex flex-col items-center justify-center bg-blue-100 rotate-180">
+          {comic.cover && <img src={comic.cover} alt="Cover" className="w-full h-full object-cover scale-[1.08]" />}
+
+          <div className="absolute bottom-2 right-2 bg-black text-white px-2 py-0.5 text-xs font-bold">#1</div>
+>>>>>>> 1fb525a7f2f2ec568b8670478f7ea9e00b6b2a96
         </div>
 
         {/* 2–3. Páginas 5 y 6: PNGs de marca → cover para llenar sin bandas */}
@@ -159,6 +172,7 @@ export const ComicPrintView: React.FC<ComicPrintViewProps> = ({ comic, onReset }
             <div className="absolute bottom-1 right-1 z-10 text-[10px] font-bold bg-white px-1 border border-black text-[#00338D]">5</div>
         </div>
 
+<<<<<<< HEAD
         {/* 4. CONTRAPORTADA IA — mismo tratamiento que portada */}
         <div className={`min-h-0 min-w-0 border-b-2 border-black relative overflow-hidden ${PRINT_PANEL_BG} p-0 rotate-180`}>
            {comic.backCover && (
@@ -174,30 +188,69 @@ export const ComicPrintView: React.FC<ComicPrintViewProps> = ({ comic, onReset }
            {comic.p1 && <img src={comic.p1} alt="Page 1" className="print-ia-fill-height z-0" />}
            <div className="absolute top-1.5 left-1.5 right-1.5 z-10 bg-white/95 border-2 border-black p-1.5 shadow-sm text-[#00338D]">
                 <p className="text-xs font-bold font-comic leading-tight">{comic.captions.p1}</p>
+=======
+        {/* 4. TOP RIGHT: BACK COVER (Inverted) */}
+        <div className="border-b-2 border-black relative overflow-hidden flex flex-col items-center justify-center bg-[#00338D] rotate-180">
+           {comic.backCover && <img src={comic.backCover} alt="Back Cover" className="w-full h-full object-cover opacity-80 scale-[1.08]" />}
+           <div className="absolute inset-x-0 bottom-12 flex justify-center">
+             <h2 className="text-6xl comic-title text-white drop-shadow-[3px_3px_0px_rgba(0,0,0,1)]" style={{ fontFamily: "'KPMGBold', 'Arial Black', sans-serif" }}>FIN</h2>
+           </div>
+        </div>
+
+        {/* 5. BOTTOM LEFT: PAGE 1 */}
+        <div className="border-r-2 border-t-2 border-black relative overflow-hidden flex flex-col items-center justify-center bg-white">
+           {comic.p1 && <img src={comic.p1} alt="Page 1" className="w-full h-full object-cover scale-[1.08]" />}
+           <div className="absolute top-2 left-2 right-2 bg-[#0091DA] border-2 border-black p-2 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                <p className="text-sm font-bold font-comic leading-tight text-white">{comic.captions.p1}</p>
+>>>>>>> 1fb525a7f2f2ec568b8670478f7ea9e00b6b2a96
             </div>
            <div className="absolute bottom-1 right-1 z-10 text-[10px] font-bold bg-white px-1 border border-black text-[#00338D]">1</div>
         </div>
 
+<<<<<<< HEAD
         <div className={`min-h-0 min-w-0 border-r-2 border-t-2 border-black relative overflow-hidden ${PRINT_PANEL_BG} p-0`}>
            {comic.p2 && <img src={comic.p2} alt="Page 2" className="print-ia-fill-height z-0" />}
            <div className="absolute bottom-4 left-1.5 right-1.5 z-10 bg-[#E6F4F4] border-2 border-black p-1.5 shadow-sm text-[#00338D]">
                 <p className="text-xs font-bold font-comic leading-tight">{comic.captions.p2}</p>
+=======
+        {/* 6. BOTTOM MID-LEFT: PAGE 2 */}
+        <div className="border-r-2 border-t-2 border-black relative overflow-hidden flex flex-col items-center justify-center bg-white">
+           {comic.p2 && <img src={comic.p2} alt="Page 2" className="w-full h-full object-cover scale-[1.08]" />}
+           <div className="absolute bottom-6 left-2 right-2 bg-[#00A3A1] border-2 border-black p-2 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                <p className="text-sm font-bold font-comic leading-tight text-white">{comic.captions.p2}</p>
+>>>>>>> 1fb525a7f2f2ec568b8670478f7ea9e00b6b2a96
             </div>
            <div className="absolute bottom-1 right-1 z-10 text-[10px] font-bold bg-white px-1 border border-black text-[#00338D]">2</div>
         </div>
 
+<<<<<<< HEAD
         <div className={`min-h-0 min-w-0 border-r-2 border-t-2 border-black relative overflow-hidden ${PRINT_PANEL_BG} p-0`}>
            {comic.p3 && <img src={comic.p3} alt="Page 3" className="print-ia-fill-height z-0" />}
            <div className="absolute bottom-4 left-1.5 right-1.5 z-10 bg-white border-2 border-black p-1.5 shadow-sm text-[#00338D]">
                 <p className="text-xs font-bold font-comic leading-tight uppercase">{comic.captions.p3}</p>
+=======
+        {/* 7. BOTTOM MID-RIGHT: PAGE 3 */}
+        <div className="border-r-2 border-t-2 border-black relative overflow-hidden flex flex-col items-center justify-center bg-[#EEF0F8]">
+           {comic.p3 && <img src={comic.p3} alt="Page 3" className="w-full h-full object-cover scale-[1.08]" />}
+           <div className="absolute bottom-6 left-2 right-2 bg-[#483698] border-2 border-black p-2 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                <p className="text-sm font-bold font-comic leading-tight uppercase text-white">{comic.captions.p3}</p>
+>>>>>>> 1fb525a7f2f2ec568b8670478f7ea9e00b6b2a96
             </div>
            <div className="absolute bottom-1 right-1 z-10 text-[10px] font-bold bg-white px-1 border border-black text-[#00338D]">3</div>
         </div>
 
+<<<<<<< HEAD
         <div className={`min-h-0 min-w-0 border-l-0 border-t-2 border-black relative overflow-hidden ${PRINT_PANEL_BG} p-0`}>
            {comic.p4 && <img src={comic.p4} alt="Page 4" className="print-ia-fill-height z-0" />}
            <div className="absolute top-4 left-2 right-2 z-10 bg-white/95 border-2 border-black p-1.5 shadow-sm rounded-full text-[#00338D]">
                 <p className="text-xs font-bold font-comic leading-tight text-center italic">"{comic.captions.p4}"</p>
+=======
+        {/* 8. BOTTOM RIGHT: PAGE 4 */}
+        <div className="border-l-0 border-t-2 border-black relative overflow-hidden flex flex-col items-center justify-center bg-[#00338D]">
+           {comic.p4 && <img src={comic.p4} alt="Page 4" className="w-full h-full object-cover opacity-90 scale-[1.08]" />}
+           <div className="absolute top-6 left-4 right-4 bg-[#6D2077] border-2 border-black p-2 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] rounded-full">
+                <p className="text-sm font-bold font-comic leading-tight text-center italic text-white">"{comic.captions.p4}"</p>
+>>>>>>> 1fb525a7f2f2ec568b8670478f7ea9e00b6b2a96
             </div>
            <div className="absolute bottom-1 right-1 z-10 text-[10px] font-bold bg-white px-1 border border-black text-[#00338D]">4</div>
         </div>
