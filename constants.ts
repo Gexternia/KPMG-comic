@@ -1,7 +1,9 @@
 export const MODEL_NAME = 'gemini-2.5-flash-image';
 export const TEXT_MODEL_NAME = 'gemini-2.5-flash';
 
-// Prompt templates
+// ──────────────────────────────────────────────
+// SHARED STYLE BASE
+// ──────────────────────────────────────────────
 export const STYLE_PROMPT = `
 Style: American comic book style, modern, high contrast, bold black ink lines, halftone patterns.
 The character MUST closely resemble the person in the provided image.
@@ -21,23 +23,48 @@ SAFE ZONE FOR TEXT: The left and right edges (at least 20% on each side) will be
 CRITICAL SPELLING: Any text MUST be perfect Spanish, checked letter-by-letter.
 `;
 
-// Story Generation (JSON)
-export const STORY_PROMPT = (data: {userName: string, worst: string, best: string}) => `
-You are a comic book writer. Write a short, punchy, dramatic narrative in SPANISH for a 4-panel comic about a consultant from KPMG named ${data.userName}.
+// ──────────────────────────────────────────────
+// STORY GENERATION (JSON)
+// ──────────────────────────────────────────────
+export const STORY_PROMPT = (data: { userName: string; worst: string; best: string }) => `
+You are a comic book writer. Create a 4-panel narrative in SPANISH for a KPMG consultant named ${data.userName}.
+
 Inputs:
-- Protagonist: ${data.userName}
+- Protagonista: ${data.userName}
 - Mayor aprendizaje en KPMG (reto, crecimiento): ${data.worst}
 - Recuerdo más especial en KPMG (momento memorable): ${data.best}
 
-Return strictly a JSON object with these 4 keys containing the text for a caption box or speech bubble:
-- "p1": The Dark Beginning (The challenge arrives)
-- "p2": The struggle tied to that learning experience (pressure, doubt)
-- "p3": The Turning Point (A ray of hope)
-- "p4": The Glorious End (echoing their special memory / success)
-Keep texts short (max 15 words). Fun, dramatic, and professional KPMG tone.
+Return ONLY a valid JSON object (no markdown, no backticks, no explanation). Keys:
+
+{
+  "p1_caption": "...",
+  "p1_scene": "...",
+  "p2_caption": "...",
+  "p2_scene": "...",
+  "p3_caption": "...",
+  "p3_scene": "...",
+  "p4_caption": "...",
+  "p4_scene": "..."
+}
+
+Rules for each panel:
+- "caption": Text that will appear as an overlay on the comic panel. MAX 6 words. Must be a dramatic, punchy line in Spanish. Use proper Spanish spelling and grammar.
+- "scene": A short visual description (in English) of what is happening in the panel. MAX 20 words. Describe the action, body language, and atmosphere. Do NOT mention any text, speech bubbles, or captions — only visual action.
+
+Tone: Fun, dramatic, professional. Think Marvel meets corporate consulting.
+
+Panel structure:
+- p1: THE DARK BEGINNING — The challenge arrives. Tie it to "${data.worst}".
+- p2: THE STRUGGLE — Under pressure, doubt, exhaustion. Deepen the "${data.worst}" theme.
+- p3: THE TURNING POINT — A ray of hope, a breakthrough moment.
+- p4: THE GLORIOUS END — Victory and celebration. Tie it to "${data.best}".
 `;
 
-// 1. Cover
+// ──────────────────────────────────────────────
+// IMAGE PROMPTS
+// ──────────────────────────────────────────────
+
+// 1. COVER
 export const COVER_PROMPT_TEMPLATE = (userName: string) => `
 ${STYLE_PROMPT}
 ${COVER_TEXT_RULES}
@@ -50,8 +77,8 @@ Keep the text perfectly centered and leave wide clear margins on the left and ri
 IMPORTANT: DO NOT include any white borders, frames, or margins around the image. The artwork MUST bleed fully to the edges.
 `;
 
-// 2. Page 1: Dark Start
-export const P1_PROMPT_TEMPLATE = () => `
+// 2. PANEL 1: Dark Start
+export const P1_PROMPT_TEMPLATE = (userName: string, caption: string, scene: string) => `
 ${STYLE_PROMPT}
 ${NO_TEXT_PROMPT}
 Context: The challenge arrives.
@@ -59,8 +86,8 @@ Action: The character faces a difficult situation or the start of a major proble
 Atmosphere: Tense, serious.
 `;
 
-// 3. Page 2: Challenge / learning under pressure
-export const P2_PROMPT_TEMPLATE = (worst: string) => `
+// 3. PANEL 2: Struggle
+export const P2_PROMPT_TEMPLATE = (userName: string, caption: string, scene: string, worst: string) => `
 ${STYLE_PROMPT}
 ${NO_TEXT_PROMPT}
 Context: The hardest part of that learning experience.
@@ -68,8 +95,8 @@ Action: The character is struggling, exhausted, or under intense pressure. Visua
 Atmosphere: Dark, stressful, dramatic lighting.
 `;
 
-// 4. Page 3: Turning Point
-export const P3_PROMPT_TEMPLATE = () => `
+// 4. PANEL 3: Turning Point
+export const P3_PROMPT_TEMPLATE = (userName: string, caption: string, scene: string) => `
 ${STYLE_PROMPT}
 ${NO_TEXT_PROMPT}
 Context: The turning point.
@@ -77,8 +104,8 @@ Action: The character finds a solution, a ray of hope, or starts to overcome the
 Atmosphere: Brighter, determined, hopeful.
 `;
 
-// 5. Page 4: Glorious End
-export const P4_PROMPT_TEMPLATE = (best: string) => `
+// 5. PANEL 4: Glorious End
+export const P4_PROMPT_TEMPLATE = (userName: string, caption: string, scene: string, best: string) => `
 ${STYLE_PROMPT}
 ${NO_TEXT_PROMPT}
 Context: The glorious end.
@@ -86,8 +113,8 @@ Action: The character celebrates a victory or cherished memory. Visual metaphor 
 Atmosphere: Bright, triumphant, epic.
 `;
 
-// 8. Back Cover
-export const BACK_COVER_PROMPT_TEMPLATE = () => `
+// 6. BACK COVER
+export const BACK_COVER_PROMPT_TEMPLATE = (userName: string) => `
 ${STYLE_PROMPT}
 ${NO_TEXT_PROMPT}
 Context: The End / Legacy.
