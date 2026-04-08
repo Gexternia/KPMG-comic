@@ -7,12 +7,8 @@ Style: American comic book style, modern, high contrast, bold black ink lines, h
 The character MUST closely resemble the person in the provided image.
 Background: stylized corporate consulting environment (glass offices, city skyline, presentation screens).
 Dominant colors: deep blues (#00338D), medium blues (#005EB8) and teal (#00A3A1) with classic comic black and white.
-<<<<<<< HEAD
 Aspect Ratio: Landscape 4:3. Edge-to-edge artwork (full bleed).
-=======
-Aspect Ratio: IMPORTANT! Generate a SQUARE (1:1 proportion) image.
-IMPORTANT: The artwork MUST bleed fully to all four edges. DO NOT include any white borders, comic book panel frames, letterboxing, or margins around the image.
->>>>>>> 1fb525a7f2f2ec568b8670478f7ea9e00b6b2a96
+IMPORTANT: The artwork MUST bleed fully to all four edges. DO NOT include white borders, comic panel frames, letterboxing, or margins around the image.
 Any text appearing in the image (signs, screens, titles) MUST be in Spanish.
 `;
 

@@ -35,13 +35,8 @@ export const StepCamera: React.FC<StepCameraProps> = ({ onCapture }) => {
   };
 
   return (
-<<<<<<< HEAD
-    <div className="flex flex-col items-center justify-center h-full space-y-6 animate-fade-in">
-      <h2 className="text-4xl md:text-5xl comic-title text-center mb-4 bg-white border-4 border-black px-6 py-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] text-[#00338D]">
-=======
-    <div className="flex flex-col items-center justify-center h-full p-4 space-y-6 animate-fade-in w-full">
-      <h2 className="text-3xl md:text-5xl comic-title text-center mb-4 bg-white border-4 border-black px-4 md:px-6 py-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] max-w-[90vw]">
->>>>>>> 1fb525a7f2f2ec568b8670478f7ea9e00b6b2a96
+    <div className="flex flex-col items-center justify-center h-full w-full p-4 space-y-6 animate-fade-in">
+      <h2 className="text-3xl md:text-5xl comic-title text-center mb-4 bg-white border-4 border-black px-4 md:px-6 py-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] text-[#00338D] max-w-[90vw]">
         IDENTIFICA AL PROTAGONISTA
       </h2>
       

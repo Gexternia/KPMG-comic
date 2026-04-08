@@ -73,32 +73,23 @@ function App() {
             <h1 className="text-6xl md:text-8xl comic-title text-white drop-shadow-[4px_4px_0px_rgba(255,255,255,0.5)]">
               MAKE YOUR HISTORY
             </h1>
-<<<<<<< HEAD
-            <p className="text-2xl md:text-3xl font-bold max-w-2xl bg-white border-4 border-black p-6 transform -rotate-1 text-[#00338D]">
+            <p className="text-xl md:text-3xl font-bold max-w-2xl bg-white border-4 border-black p-4 md:p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transform -rotate-1 text-[#00338D]">
               ¡Convierte tu historia en KPMG en un fanzine épico al instante!
             </p>
-            <div className="pt-8">
-              <Button variant="cta" onClick={() => setStep(AppStep.CAMERA)} className="text-2xl px-12 py-6">
-                COMENZAR TU HISTORIA EN KPMG <Zap className="ml-2 w-8 h-8 fill-[#00338D]" />
-=======
-            <p className="text-xl md:text-3xl font-bold max-w-2xl bg-white border-4 border-black p-4 md:p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transform -rotate-1">
-              ¡Convierte tu historia en KPMG en un cómic único!
-            </p>
             <div className="pt-8 w-full px-4 max-w-md md:max-w-none">
-              <Button onClick={() => setStep(AppStep.CAMERA)} className="w-full md:w-auto text-lg md:text-2xl px-6 md:px-12 py-4 md:py-6 flex justify-center items-center">
-                COMENZAR <Zap className="ml-2 w-6 h-6 md:w-8 md:h-8 fill-yellow-300 flex-shrink-0" />
->>>>>>> 1fb525a7f2f2ec568b8670478f7ea9e00b6b2a96
+              <Button
+                variant="cta"
+                onClick={() => setStep(AppStep.CAMERA)}
+                className="w-full md:w-auto text-lg md:text-2xl px-6 md:px-12 py-4 md:py-6 flex justify-center items-center"
+              >
+                COMENZAR TU HISTORIA EN KPMG{' '}
+                <Zap className="ml-2 w-6 h-6 md:w-8 md:h-8 fill-[#00338D] flex-shrink-0" />
               </Button>
             </div>
-            
+
             {/* Decorative Elements */}
-<<<<<<< HEAD
-            <div className="fixed top-10 left-10 w-32 h-32 bg-[#00A3A1] rounded-full border-4 border-black opacity-20 pointer-events-none"></div>
-            <div className="fixed bottom-10 right-10 w-48 h-48 bg-[#1E49E2] transform rotate-12 border-4 border-black opacity-20 pointer-events-none"></div>
-=======
-            <div className="hidden md:block fixed top-10 left-10 w-32 h-32 bg-[#00A3A1] rounded-full border-4 border-black opacity-20 pointer-events-none"></div>
-            <div className="hidden md:block fixed bottom-10 right-10 w-48 h-48 bg-[#00338D] transform rotate-12 border-4 border-black opacity-20 pointer-events-none"></div>
->>>>>>> 1fb525a7f2f2ec568b8670478f7ea9e00b6b2a96
+            <div className="hidden md:block fixed top-10 left-10 w-32 h-32 bg-[#00A3A1] rounded-full border-4 border-black opacity-20 pointer-events-none" />
+            <div className="hidden md:block fixed bottom-10 right-10 w-48 h-48 bg-[#1E49E2] rotate-12 border-4 border-black opacity-20 pointer-events-none" />
           </div>
         );
 
@@ -118,13 +109,8 @@ function App() {
 
       case AppStep.GENERATING:
         return (
-<<<<<<< HEAD
           <div className="flex flex-col items-center justify-center h-screen bg-[#1E49E2] text-white p-4 text-center">
             <Loader2 className="w-24 h-24 animate-spin text-yellow-400 mb-8" />
-=======
-          <div className="flex flex-col items-center justify-center h-screen bg-black text-white p-4 text-center">
-            <Loader2 className="w-24 h-24 animate-spin text-blue-500 mb-8" />
->>>>>>> 1fb525a7f2f2ec568b8670478f7ea9e00b6b2a96
             <h2 className="text-4xl comic-title animate-pulse mb-4">
               LA IA ESTÁ DIBUJANDO TU DESTINO...
             </h2>
