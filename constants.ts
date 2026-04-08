@@ -7,7 +7,7 @@ Style: American comic book style, modern, high contrast, bold black ink lines, h
 The character MUST closely resemble the person in the provided image.
 Background: stylized corporate consulting environment (glass offices, city skyline, presentation screens).
 Dominant colors: deep blues (#00338D), medium blues (#005EB8) and teal (#00A3A1) with classic comic black and white.
-Aspect Ratio: Landscape 4:3.
+Aspect Ratio: Landscape 4:3. Edge-to-edge artwork (full bleed).
 Any text appearing in the image (signs, screens, titles) MUST be in Spanish.
 `;
 
@@ -16,14 +16,14 @@ export const STORY_PROMPT = (data: {userName: string, worst: string, best: strin
 You are a comic book writer. Write a short, punchy, dramatic narrative in SPANISH for a 4-panel comic about a consultant from KPMG named ${data.userName}.
 Inputs:
 - Protagonist: ${data.userName}
-- Worst Moment at KPMG: ${data.worst}
-- Best Moment at KPMG: ${data.best}
+- Mayor aprendizaje en KPMG (reto, crecimiento): ${data.worst}
+- Recuerdo más especial en KPMG (momento memorable): ${data.best}
 
 Return strictly a JSON object with these 4 keys containing the text for a caption box or speech bubble:
 - "p1": The Dark Beginning (The challenge arrives)
-- "p2": The Worst Point (Maximum pressure and doubt)
+- "p2": The struggle tied to that learning experience (pressure, doubt)
 - "p3": The Turning Point (A ray of hope)
-- "p4": The Glorious End (Victory and success)
+- "p4": The Glorious End (echoing their special memory / success)
 Keep texts short (max 15 words). Fun, dramatic, and professional KPMG tone.
 `;
 
@@ -43,11 +43,11 @@ Action: The character faces a difficult situation or the start of a major proble
 Atmosphere: Tense, serious.
 `;
 
-// 3. Page 2: Worst Point
+// 3. Page 2: Challenge / learning under pressure
 export const P2_PROMPT_TEMPLATE = (worst: string) => `
 ${STYLE_PROMPT}
-Context: The worst point.
-Action: The character is struggling, exhausted, or facing failure. Visual metaphor for: "${worst}".
+Context: The hardest part of that learning experience.
+Action: The character is struggling, exhausted, or under intense pressure. Visual metaphor for this learning moment: "${worst}".
 Atmosphere: Dark, stressful, dramatic lighting.
 `;
 
@@ -63,7 +63,7 @@ Atmosphere: Brighter, determined, hopeful.
 export const P4_PROMPT_TEMPLATE = (best: string) => `
 ${STYLE_PROMPT}
 Context: The glorious end.
-Action: The character celebrates a victory or achievement. Visual metaphor for: "${best}".
+Action: The character celebrates a victory or cherished memory. Visual metaphor for this special moment: "${best}".
 Atmosphere: Bright, triumphant, epic.
 `;
 

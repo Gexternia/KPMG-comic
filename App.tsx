@@ -69,42 +69,42 @@ function App() {
     switch (step) {
       case AppStep.WELCOME:
         return (
-          <div className="flex flex-col items-center justify-center min-h-screen p-8 text-center space-y-8 animate-fade-in">
+          <div className="flex flex-col items-center justify-center min-h-screen p-8 text-center space-y-8 animate-fade-in text-white">
             <h1 className="text-6xl md:text-8xl comic-title text-white drop-shadow-[4px_4px_0px_rgba(255,255,255,0.5)]">
               HERO MAKER
             </h1>
-            <p className="text-2xl md:text-3xl font-bold max-w-2xl bg-white border-4 border-black p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transform -rotate-1">
+            <p className="text-2xl md:text-3xl font-bold max-w-2xl bg-white border-4 border-black p-6 transform -rotate-1 text-[#00338D]">
               ¡Convierte tu historia en KPMG en un fanzine épico al instante!
             </p>
             <div className="pt-8">
-              <Button onClick={() => setStep(AppStep.CAMERA)} className="text-2xl px-12 py-6">
-                COMENZAR TU HISTORIA EN KPMG <Zap className="ml-2 w-8 h-8 fill-yellow-300" />
+              <Button variant="cta" onClick={() => setStep(AppStep.CAMERA)} className="text-2xl px-12 py-6">
+                COMENZAR TU HISTORIA EN KPMG <Zap className="ml-2 w-8 h-8 fill-[#00338D]" />
               </Button>
             </div>
             
             {/* Decorative Elements */}
             <div className="fixed top-10 left-10 w-32 h-32 bg-[#00A3A1] rounded-full border-4 border-black opacity-20 pointer-events-none"></div>
-            <div className="fixed bottom-10 right-10 w-48 h-48 bg-[#00338D] transform rotate-12 border-4 border-black opacity-20 pointer-events-none"></div>
+            <div className="fixed bottom-10 right-10 w-48 h-48 bg-[#1E49E2] transform rotate-12 border-4 border-black opacity-20 pointer-events-none"></div>
           </div>
         );
 
       case AppStep.CAMERA:
         return (
-          <div className="h-screen w-screen bg-dots bg-[length:20px_20px]">
+          <div className="h-screen w-screen bg-dots bg-[length:20px_20px] text-white">
             <StepCamera onCapture={handleCapture} />
           </div>
         );
 
       case AppStep.FORM:
         return (
-          <div className="h-screen w-screen bg-dots overflow-y-auto py-10">
+          <div className="h-screen w-screen bg-dots overflow-y-auto py-10 text-white">
             <StepForm initialData={userData} onSubmit={handleFormSubmit} />
           </div>
         );
 
       case AppStep.GENERATING:
         return (
-          <div className="flex flex-col items-center justify-center h-screen bg-black text-white p-4 text-center">
+          <div className="flex flex-col items-center justify-center h-screen bg-[#1E49E2] text-white p-4 text-center">
             <Loader2 className="w-24 h-24 animate-spin text-yellow-400 mb-8" />
             <h2 className="text-4xl comic-title animate-pulse mb-4">
               LA IA ESTÁ DIBUJANDO TU DESTINO...
@@ -118,7 +118,7 @@ function App() {
       case AppStep.PREVIEW:
         if (!comicPages) return null;
         return (
-          <ComicPrintView comic={comicPages} data={userData} onReset={handleReset} />
+          <ComicPrintView comic={comicPages} onReset={handleReset} />
         );
       
       default:
@@ -127,7 +127,7 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#00338D] bg-[radial-gradient(#ffffff11_1px,transparent_1px)] bg-[length:20px_20px]">
+    <div className="min-h-screen bg-[#1E49E2] bg-[radial-gradient(#ffffff11_1px,transparent_1px)] bg-[length:20px_20px] print:!min-h-0 print:!bg-white print:[background-image:none]">
       {renderStep()}
     </div>
   );

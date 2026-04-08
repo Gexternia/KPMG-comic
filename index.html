@@ -26,12 +26,19 @@
           size: A4 landscape;
           margin: 0;
         }
+        /* Anula fondos de Tailwind (cobalto) para que no quede “marco” azul alrededor del fanzine */
+        html,
         body {
-          margin: 0;
-          padding: 0;
-          background: white;
+          margin: 0 !important;
+          padding: 0 !important;
+          background: white !important;
+          background-color: white !important;
           -webkit-print-color-adjust: exact;
           print-color-adjust: exact;
+        }
+        #root {
+          background: white !important;
+          min-height: 0 !important;
         }
         .no-print {
           display: none !important;
@@ -39,10 +46,33 @@
         .print-only {
           display: grid !important;
         }
+
+        /*
+          Viñetas p1–p4: escala por altura; sobrante lateral se recorta.
+          Portada / contraportada: llenan la celda con object-fit fill (estira sobre todo el alto, sin bandas arriba/abajo).
+        */
+        .print-ia-fill-height {
+          position: absolute !important;
+          top: 0 !important;
+          bottom: 0 !important;
+          left: 50% !important;
+          transform: translateX(-50%) !important;
+          height: 100% !important;
+          width: auto !important;
+          max-width: none !important;
+        }
+        .print-ia-cover-stretch {
+          position: absolute !important;
+          left: 0 !important;
+          top: 0 !important;
+          width: 100% !important;
+          height: 100% !important;
+          object-fit: fill !important;
+        }
       }
     </style>
 </head>
-  <body class="bg-yellow-400 text-gray-900 overflow-hidden">
+  <body class="bg-[#1E49E2] text-neutral-900 overflow-hidden print:!bg-white print:!overflow-visible">
     <div id="root"></div>
   <script type="module" src="/index.tsx"></script>
 </body>

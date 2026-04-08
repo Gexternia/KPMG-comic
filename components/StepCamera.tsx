@@ -36,7 +36,7 @@ export const StepCamera: React.FC<StepCameraProps> = ({ onCapture }) => {
 
   return (
     <div className="flex flex-col items-center justify-center h-full space-y-6 animate-fade-in">
-      <h2 className="text-4xl md:text-5xl comic-title text-center mb-4 bg-white border-4 border-black px-6 py-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+      <h2 className="text-4xl md:text-5xl comic-title text-center mb-4 bg-white border-4 border-black px-6 py-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] text-[#00338D]">
         IDENTIFICA AL PROTAGONISTA
       </h2>
       
@@ -46,8 +46,15 @@ export const StepCamera: React.FC<StepCameraProps> = ({ onCapture }) => {
         ) : (
           <Webcam
             audio={false}
-            ref={webcamRef}
+            disablePictureInPicture={false}
+            forceScreenshotSourceSize={false}
+            imageSmoothing
+            mirrored={false}
+            onUserMedia={() => undefined}
+            onUserMediaError={() => undefined}
             screenshotFormat="image/jpeg"
+            screenshotQuality={0.92}
+            ref={webcamRef}
             videoConstraints={videoConstraints}
             className="w-[400px] h-[400px] object-cover"
           />
