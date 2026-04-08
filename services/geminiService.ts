@@ -1,4 +1,4 @@
-import { GoogleGenAI} from "@google/genai";
+import { GoogleGenAI, Modality } from "@google/genai";
 import { 
   MODEL_NAME, 
   TEXT_MODEL_NAME,
@@ -47,48 +47,87 @@ async function generateStory(userData: UserData): Promise<{p1: string, p2: strin
     }
 }
 
+function extractImageDataUrl(response: {
+  candidates?: Array<{
+    content?: { parts?: Array<{ inlineData?: { mimeType?: string; data?: string } }> };
+    finishReason?: string;
+    finishMessage?: string;
+  }>;
+  promptFeedback?: { blockReason?: string; blockReasonMessage?: string };
+}): string | null {
+  for (const candidate of response.candidates ?? []) {
+    const parts = candidate.content?.parts;
+    if (!parts?.length) continue;
+    for (const part of parts) {
+      const data = part.inlineData?.data;
+      if (data) {
+        const mime =
+          part.inlineData?.mimeType && part.inlineData.mimeType.startsWith("image/")
+            ? part.inlineData.mimeType
+            : "image/png";
+        return `data:${mime};base64,${data}`;
+      }
+    }
+  }
+  return null;
+}
+
+function describeImageResponseError(response: {
+  candidates?: Array<{
+    content?: { parts?: unknown[] };
+    finishReason?: string;
+    finishMessage?: string;
+  }>;
+  promptFeedback?: { blockReason?: string; blockReasonMessage?: string };
+}): string {
+  const block = response.promptFeedback?.blockReason;
+  if (block) {
+    return `El prompt fue bloqueado (${block}). Prueba con otra foto o reformula el texto.`;
+  }
+  const c0 = response.candidates?.[0];
+  if (!c0) return "La API no devolvió ninguna respuesta.";
+  if (!c0.content?.parts?.length) {
+    const r = c0.finishReason ?? "desconocido";
+    const m = c0.finishMessage ? ` ${c0.finishMessage}` : "";
+    return `La IA no devolvió imagen (motivo: ${r}).${m}`;
+  }
+  return "No se encontró datos de imagen en la respuesta.";
+}
+
 /**
  * Helper to generate a single panel image
  */
 async function generatePanel(base64Image: string, prompt: string): Promise<string> {
-  try {
-    // Strip header if present to get raw base64
-    const cleanBase64 = base64Image.replace(/^data:image\/(png|jpg|jpeg);base64,/, "");
+  const cleanBase64 = base64Image.replace(/^data:image\/(png|jpg|jpeg|webp);base64,/, "");
 
-    const response = await ai.models.generateContent({
-      model: MODEL_NAME,
-      contents: {
+  const response = await ai.models.generateContent({
+    model: MODEL_NAME,
+    contents: [
+      {
+        role: "user",
         parts: [
           {
             inlineData: {
-              mimeType: 'image/jpeg',
-              data: cleanBase64
-            }
+              mimeType: "image/jpeg",
+              data: cleanBase64,
+            },
           },
-          {
-            text: prompt
-          }
-        ]
-      }
-    });
+          { text: prompt },
+        ],
+      },
+    ],
+    config: {
+      // Imagen + posible texto auxiliar; solo IMAGE a veces devuelve candidatos sin `content`.
+      responseModalities: [Modality.TEXT, Modality.IMAGE],
+    },
+  });
 
-    // Check for image in response
-    const candidates = response.candidates;
-    if (candidates && candidates.length > 0) {
-      for (const part of candidates[0].content.parts) {
-        if (part.inlineData && part.inlineData.data) {
-           return `data:image/png;base64,${part.inlineData.data}`;
-        }
-      }
-    }
-    
-    // Fallback if no image found
-    throw new Error("No image generated.");
+  const dataUrl = extractImageDataUrl(response);
+  if (dataUrl) return dataUrl;
 
-  } catch (error) {
-    console.error("Gemini Generation Error:", error);
-    throw error;
-  }
+  const detail = describeImageResponseError(response);
+  console.error("Gemini image response:", response);
+  throw new Error(detail);
 }
 
 /**
