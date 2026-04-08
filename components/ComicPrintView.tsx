@@ -145,7 +145,7 @@ export const ComicPrintView: React.FC<ComicPrintViewProps> = ({ comic, onReset }
         {/* 1. PORTADA — estira a la celda (fill) para quitar bandas arriba/abajo */}
         <div className={`min-h-0 min-w-0 border-r-2 border-b-2 border-black relative overflow-hidden ${PRINT_PANEL_BG} p-0 rotate-180`}>
           {comic.cover && (
-            <img src={comic.cover} alt="Cover" className="print-ia-cover-stretch z-0" />
+            <img src={comic.cover} alt="Cover" className="print-ia-fill-height z-0" />
           )}
           <div className="absolute bottom-2 right-2 z-10 bg-black text-white px-2 py-0.5 text-xs font-bold">#1</div>
         </div>
@@ -164,7 +164,7 @@ export const ComicPrintView: React.FC<ComicPrintViewProps> = ({ comic, onReset }
         {/* 4. CONTRAPORTADA IA */}
         <div className={`min-h-0 min-w-0 border-b-2 border-black relative overflow-hidden ${PRINT_PANEL_BG} p-0 rotate-180`}>
            {comic.backCover && (
-             <img src={comic.backCover} alt="Back Cover" className="print-ia-cover-stretch z-0" />
+             <img src={comic.backCover} alt="Back Cover" className="print-ia-fill-height z-0" />
            )}
            <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none bg-black/25 print:bg-black/20">
              <h2 className="text-5xl comic-title text-white drop-shadow-[2px_2px_0_#000]" style={{ fontFamily: "'KPMGBold', 'Arial Black', sans-serif", WebkitTextStroke: '1px rgba(0,0,0,0.4)' }}>FIN</h2>
