@@ -14,10 +14,24 @@ import { UserData, ComicPages } from '../types';
 
 const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_API_KEY || "dummy_key" });
 
+// ──────────────────────────────────────────────
+// Story type matching the new STORY_PROMPT output
+// ──────────────────────────────────────────────
+interface StoryOutput {
+  p1_caption: string;
+  p1_scene: string;
+  p2_caption: string;
+  p2_scene: string;
+  p3_caption: string;
+  p3_scene: string;
+  p4_caption: string;
+  p4_scene: string;
+}
+
 /**
- * Generate the text narrative (captions)
+ * Generate the text narrative (captions + scene descriptions)
  */
-async function generateStory(userData: UserData): Promise<{p1: string, p2: string, p3: string, p4: string}> {
+async function generateStory(userData: UserData): Promise<StoryOutput> {
     try {
         const response = await ai.models.generateContent({
             model: TEXT_MODEL_NAME,
@@ -34,15 +48,32 @@ async function generateStory(userData: UserData): Promise<{p1: string, p2: strin
         const text = response.text;
         if (!text) throw new Error("No story generated");
         
-        return JSON.parse(text);
+        const parsed = JSON.parse(text) as StoryOutput;
+
+        // Validate all fields exist
+        const requiredKeys: (keyof StoryOutput)[] = [
+          'p1_caption', 'p1_scene', 'p2_caption', 'p2_scene',
+          'p3_caption', 'p3_scene', 'p4_caption', 'p4_scene'
+        ];
+        for (const key of requiredKeys) {
+          if (!parsed[key] || typeof parsed[key] !== 'string') {
+            throw new Error(`Missing or invalid story field: ${key}`);
+          }
+        }
+
+        return parsed;
     } catch (e) {
         console.error("Story generation failed", e);
-        // Fallback text
+        // Fallback
         return {
-            p1: "Todo comenzó con una idea...",
-            p2: "Pero algo oscuro se acercaba...",
-            p3: "¡El desastre golpeó con fuerza!",
-            p4: "¿Es este el final de todo?"
+            p1_caption: "La crisis amenaza...",
+            p1_scene: "Character stares at a wall of screens showing declining graphs, looking worried.",
+            p2_caption: "No hay salida...",
+            p2_scene: "Character sits alone in a dark office, head in hands, papers scattered.",
+            p3_caption: "¡Hay una oportunidad!",
+            p3_scene: "Character stands up with determination, light breaking through the window.",
+            p4_caption: "¡Victoria total!",
+            p4_scene: "Character celebrates with arms raised, confetti falling, colleagues cheering."
         };
     }
 }
@@ -117,7 +148,6 @@ async function generatePanel(base64Image: string, prompt: string): Promise<strin
       },
     ],
     config: {
-      // Imagen + posible texto auxiliar; solo IMAGE a veces devuelve candidatos sin `content`.
       responseModalities: [Modality.TEXT, Modality.IMAGE],
     },
   });
@@ -132,26 +162,31 @@ async function generatePanel(base64Image: string, prompt: string): Promise<strin
 
 /**
  * Generate comic book (Images + Text)
+ * 
+ * Flow:
+ * 1. Generate story + cover + back cover in parallel (these don't depend on each other)
+ * 2. Once story is ready, generate panels 1-4 in parallel (these need captions + scenes)
  */
 export async function generateComicBook(userData: UserData): Promise<ComicPages> {
   if (!userData.photo) throw new Error("Falta la foto del usuario");
 
-  // 1. Start generating text and images in parallel
-  const storyPromise = generateStory(userData);
-  
-  const imagePromises = [
-    generatePanel(userData.photo, COVER_PROMPT_TEMPLATE(userData.userName)),
-    generatePanel(userData.photo, P1_PROMPT_TEMPLATE()),
-    generatePanel(userData.photo, P2_PROMPT_TEMPLATE(userData.worstMoment)),
-    generatePanel(userData.photo, P3_PROMPT_TEMPLATE()),
-    generatePanel(userData.photo, P4_PROMPT_TEMPLATE(userData.bestMoment)),
-    generatePanel(userData.photo, BACK_COVER_PROMPT_TEMPLATE())
-  ];
+  const { userName, photo, worstMoment, bestMoment } = userData;
 
-  // 2. Wait for all
-  const [captions, [cover, p1, p2, p3, p4, backCover]] = await Promise.all([
-      storyPromise,
-      Promise.all(imagePromises)
+  // ── Phase 1: Story + Cover + Back Cover in parallel ──
+  const [story, cover, backCover] = await Promise.all([
+    generateStory(userData),
+    generatePanel(photo, COVER_PROMPT_TEMPLATE(userName)),
+    generatePanel(photo, BACK_COVER_PROMPT_TEMPLATE(userName)),
+  ]);
+
+  console.log("Story generated:", story);
+
+  // ── Phase 2: Panels 1-4 in parallel (now we have captions + scenes) ──
+  const [p1, p2, p3, p4] = await Promise.all([
+    generatePanel(photo, P1_PROMPT_TEMPLATE(userName, story.p1_caption, story.p1_scene)),
+    generatePanel(photo, P2_PROMPT_TEMPLATE(userName, story.p2_caption, story.p2_scene, worstMoment)),
+    generatePanel(photo, P3_PROMPT_TEMPLATE(userName, story.p3_caption, story.p3_scene)),
+    generatePanel(photo, P4_PROMPT_TEMPLATE(userName, story.p4_caption, story.p4_scene, bestMoment)),
   ]);
 
   return {
@@ -161,6 +196,11 @@ export async function generateComicBook(userData: UserData): Promise<ComicPages>
     p3,
     p4,
     backCover,
-    captions
+    captions: {
+      p1: story.p1_caption,
+      p2: story.p2_caption,
+      p3: story.p3_caption,
+      p4: story.p4_caption,
+    }
   };
 }
