@@ -22,19 +22,22 @@ CRITICAL SPELLING: Any text MUST be perfect Spanish, checked letter-by-letter.
 `;
 
 // Story Generation (JSON)
-export const STORY_PROMPT = (data: {userName: string, worst: string, best: string}) => `
-You are a comic book writer. Write a short, punchy, dramatic narrative in SPANISH for a 4-panel comic about a consultant from KPMG named ${data.userName}.
-Inputs:
-- Protagonist: ${data.userName}
-- Mayor aprendizaje en KPMG (reto, crecimiento): ${data.worst}
-- Recuerdo más especial en KPMG (momento memorable): ${data.best}
+export const STORY_PROMPT = (data: { userName: string; worst: string; best: string }) => `
+You are a comic book writer. Write short caption lines in SPANISH for a 4-panel comic about a KPMG consultant named ${data.userName}.
 
-Return strictly a JSON object with these 4 keys containing the text for a caption box or speech bubble:
-- "p1": The Dark Beginning (The challenge arrives)
-- "p2": The struggle tied to that learning experience (pressure, doubt)
-- "p3": The Turning Point (A ray of hope)
-- "p4": The Glorious End (echoing their special memory / success)
-Keep texts short (max 15 words). Fun, dramatic, and professional KPMG tone.
+The user wrote (use their meaning and tone; do not invent facts they did not imply):
+- Texto sobre su mayor aprendizaje / reto en KPMG: ${data.worst}
+- Texto sobre su recuerdo más especial en KPMG: ${data.best}
+
+Interpret those texts naturally. Do not force a dramatic arc, suffering, or a "hero's journey" unless their words suggest it. If they sound lighthearted, keep it light; if reflective, stay reflective. Four sequential beats (p1 → p4) that fit what they said.
+
+Return strictly a JSON object with these keys (caption or speech bubble text each):
+- "p1": First panel — sets the scene or first idea tied to their inputs.
+- "p2": Second panel — continues from their learning/challenge text as they framed it.
+- "p3": Third panel — bridge or development between both ideas, only as implied by their words.
+- "p4": Fourth panel — closes with their special memory / how they described it.
+
+Keep each value short (max 15 words). Professional KPMG context is fine; match the user's emotional tone.
 `;
 
 // 1. Cover
@@ -50,40 +53,38 @@ Keep the text perfectly centered and leave wide clear margins on the left and ri
 IMPORTANT: DO NOT include any white borders, frames, or margins around the image. The artwork MUST bleed fully to the edges.
 `;
 
-// 2. Page 1: Dark Start
-export const P1_PROMPT_TEMPLATE = () => `
+// 2. Page 1 — interpret user's story opening from both texts
+export const P1_PROMPT_TEMPLATE = (worst: string, best: string) => `
 ${STYLE_PROMPT}
 ${NO_TEXT_PROMPT}
-Context: The challenge arrives.
-Action: The character faces a difficult situation or the start of a major problem.
-Atmosphere: Tense, serious.
+The user described these (Spanish). Illustrate the FIRST panel of their comic — a scene that naturally starts their story as you interpret it from both lines. Do not force conflict, darkness, or stress unless their words suggest it.
+Learning/challenge: "${worst}"
+Special memory: "${best}"
 `;
 
-// 3. Page 2: Challenge / learning under pressure
+// 3. Page 2 — learning / challenge as the user framed it
 export const P2_PROMPT_TEMPLATE = (worst: string) => `
 ${STYLE_PROMPT}
 ${NO_TEXT_PROMPT}
-Context: The hardest part of that learning experience.
-Action: The character is struggling, exhausted, or under intense pressure. Visual metaphor for this learning moment: "${worst}".
-Atmosphere: Dark, stressful, dramatic lighting.
+Illustrate a scene that reflects what the user wrote below. Interpret their meaning and mood; use a fitting visual metaphor if helpful. Avoid defaulting to suffering, exhaustion, or doom unless they clearly said so.
+User text: "${worst}"
 `;
 
-// 4. Page 3: Turning Point
-export const P3_PROMPT_TEMPLATE = () => `
+// 4. Page 3 — bridge between both ideas, tone from the user
+export const P3_PROMPT_TEMPLATE = (worst: string, best: string) => `
 ${STYLE_PROMPT}
 ${NO_TEXT_PROMPT}
-Context: The turning point.
-Action: The character finds a solution, a ray of hope, or starts to overcome the obstacle.
-Atmosphere: Brighter, determined, hopeful.
+Illustrate a middle moment that connects these two ideas in a way that fits what the user actually wrote. No required "turning point" or hope arc — only what their words support.
+Learning/challenge: "${worst}"
+Special memory: "${best}"
 `;
 
-// 5. Page 4: Glorious End
+// 5. Page 4 — special memory as the user framed it
 export const P4_PROMPT_TEMPLATE = (best: string) => `
 ${STYLE_PROMPT}
 ${NO_TEXT_PROMPT}
-Context: The glorious end.
-Action: The character celebrates a victory or cherished memory. Visual metaphor for this special moment: "${best}".
-Atmosphere: Bright, triumphant, epic.
+Illustrate a scene that reflects what the user wrote below. Match their tone (celebratory, quiet, funny, nostalgic, etc.). Do not force a triumphant or epic finale unless it fits their words.
+User text: "${best}"
 `;
 
 // 8. Back Cover

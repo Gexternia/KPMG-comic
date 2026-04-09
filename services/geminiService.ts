@@ -39,10 +39,10 @@ async function generateStory(userData: UserData): Promise<{p1: string, p2: strin
         console.error("Story generation failed", e);
         // Fallback text
         return {
-            p1: "Todo comenzó con una idea...",
-            p2: "Pero algo oscuro se acercaba...",
-            p3: "¡El desastre golpeó con fuerza!",
-            p4: "¿Es este el final de todo?"
+            p1: "Así empezó mi historia en KPMG.",
+            p2: "Un momento que marcó mi aprendizaje.",
+            p3: "Entre el reto y lo que más valoro.",
+            p4: "Un recuerdo que me queda."
         };
     }
 }
@@ -141,9 +141,9 @@ export async function generateComicBook(userData: UserData): Promise<ComicPages>
   
   const imagePromises = [
     generatePanel(userData.photo, COVER_PROMPT_TEMPLATE(userData.userName)),
-    generatePanel(userData.photo, P1_PROMPT_TEMPLATE()),
+    generatePanel(userData.photo, P1_PROMPT_TEMPLATE(userData.worstMoment, userData.bestMoment)),
     generatePanel(userData.photo, P2_PROMPT_TEMPLATE(userData.worstMoment)),
-    generatePanel(userData.photo, P3_PROMPT_TEMPLATE()),
+    generatePanel(userData.photo, P3_PROMPT_TEMPLATE(userData.worstMoment, userData.bestMoment)),
     generatePanel(userData.photo, P4_PROMPT_TEMPLATE(userData.bestMoment)),
     generatePanel(userData.photo, BACK_COVER_PROMPT_TEMPLATE())
   ];
