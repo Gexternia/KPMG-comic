@@ -13,7 +13,7 @@ import { Printer, RefreshCcw } from 'lucide-react';
 import { Button } from './Button';
 
 /** Páginas 5 y 6 del fanzine (no generadas por IA): gráficas de marca / evento */
-const FANZINE_PAGE_5_SRC = '/fanzine/page-make-history-together.png';
+const FANZINE_PAGE_5_SRC = '/fanzine/Imagen pagina 6.jpg';
 const FANZINE_PAGE_6_SRC = '/fanzine/page-alumni-madrid.png';
 
 /** Fondo detrás de viñetas IA con object-contain: lee como “marco” de marca, no como papel roto */
@@ -174,7 +174,7 @@ export const ComicPrintView: React.FC<ComicPrintViewProps> = ({ comic, onReset }
         {/* 5–8. Viñetas IA + captions */}
         <div className={`min-h-0 min-w-0 border-r-2 border-t-2 border-black relative overflow-hidden ${PRINT_PANEL_BG} p-0`}>
            {comic.p1 && <img src={comic.p1} alt="Page 1" className="print-ia-fill-height z-0" />}
-           <div className="absolute top-1.5 left-1.5 right-1.5 z-10 bg-white/95 border-2 border-black p-1.5 shadow-sm text-[#00338D]">
+           <div className="absolute top-1.5 left-1.5 right-1.5 z-10 bg-[#0091DA] border-2 border-black p-1.5 shadow-sm text-white">
                 <p className="text-xs font-bold font-comic leading-tight">{comic.captions.p1}</p>
             </div>
            <div className="absolute bottom-1 right-1 z-10 text-[10px] font-bold bg-white px-1 border border-black text-[#00338D]">1</div>
@@ -182,7 +182,7 @@ export const ComicPrintView: React.FC<ComicPrintViewProps> = ({ comic, onReset }
 
         <div className={`min-h-0 min-w-0 border-r-2 border-t-2 border-black relative overflow-hidden ${PRINT_PANEL_BG} p-0`}>
            {comic.p2 && <img src={comic.p2} alt="Page 2" className="print-ia-fill-height z-0" />}
-           <div className="absolute bottom-4 left-1.5 right-1.5 z-10 bg-[#E6F4F4] border-2 border-black p-1.5 shadow-sm text-[#00338D]">
+           <div className="absolute bottom-4 left-1.5 right-1.5 z-10 bg-[#00A3A1] border-2 border-black p-1.5 shadow-sm text-white">
                 <p className="text-xs font-bold font-comic leading-tight">{comic.captions.p2}</p>
             </div>
            <div className="absolute bottom-1 right-1 z-10 text-[10px] font-bold bg-white px-1 border border-black text-[#00338D]">2</div>
@@ -190,16 +190,16 @@ export const ComicPrintView: React.FC<ComicPrintViewProps> = ({ comic, onReset }
 
         <div className={`min-h-0 min-w-0 border-r-2 border-t-2 border-black relative overflow-hidden ${PRINT_PANEL_BG} p-0`}>
            {comic.p3 && <img src={comic.p3} alt="Page 3" className="print-ia-fill-height z-0" />}
-           <div className="absolute bottom-4 left-1.5 right-1.5 z-10 bg-white border-2 border-black p-1.5 shadow-sm text-[#00338D]">
-                <p className="text-xs font-bold font-comic leading-tight uppercase">{comic.captions.p3}</p>
+           <div className="absolute bottom-4 left-1.5 right-1.5 z-10 bg-[#483698] border-2 border-black p-1.5 shadow-sm text-white">
+                <p className="text-xs font-bold font-comic leading-tight">{comic.captions.p3}</p>
             </div>
            <div className="absolute bottom-1 right-1 z-10 text-[10px] font-bold bg-white px-1 border border-black text-[#00338D]">3</div>
         </div>
 
         <div className={`min-h-0 min-w-0 border-l-0 border-t-2 border-black relative overflow-hidden ${PRINT_PANEL_BG} p-0`}>
            {comic.p4 && <img src={comic.p4} alt="Page 4" className="print-ia-fill-height z-0" />}
-           <div className="absolute top-4 left-2 right-2 z-10 bg-white/95 border-2 border-black p-1.5 shadow-sm rounded-full text-[#00338D]">
-                <p className="text-xs font-bold font-comic leading-tight text-center italic">"{comic.captions.p4}"</p>
+           <div className="absolute top-4 left-2 right-2 z-10 bg-[#6D2077] border-2 border-black p-1.5 shadow-sm text-white">
+                <p className="text-xs font-bold font-comic leading-tight">{comic.captions.p4}</p>
             </div>
            <div className="absolute bottom-1 right-1 z-10 text-[10px] font-bold bg-white px-1 border border-black text-[#00338D]">4</div>
         </div>
