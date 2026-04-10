@@ -7,9 +7,7 @@ Style: American comic book style, modern, high contrast, bold black ink lines, h
 The character MUST closely resemble the person in the provided image.
 Background: stylized corporate consulting environment (glass offices, city skyline, presentation screens).
 Dominant colors: deep blues (#00338D), medium blues (#005EB8) and teal (#00A3A1) with classic comic black and white.
-Aspect Ratio: Vertical Portrait 3:4.
-Framing: A single, edge-to-edge full-bleed illustration. The scene MUST stretch to the very edges of the canvas without interruption.
-IMPORTANT NO BORDERS: You must draw the illustration filling the entire picture. Absolutely NO white margins, NO black borders, NO letterboxing, and NO comic panel subdivisions.
+FILL THE ENTIRE CANVAS: The artwork must bleed fully to every edge — no white margins, no letterboxing, no inner panel frames, no borders of any kind. Every pixel must be part of the scene.
 `;
 
 export const NO_TEXT_PROMPT = `
@@ -43,14 +41,12 @@ Keep each value short (max 15 words). Professional KPMG context is fine; match t
 // 1. Cover
 export const COVER_PROMPT_TEMPLATE = (userName: string) => `
 ${STYLE_PROMPT}
-${COVER_TEXT_RULES}
 Context: A comic book cover.
 Action: A heroic "Hero Shot" of the character looking confident and strong, maybe arms crossed or pointing forward.
-Text: The image MUST include a bold, stylish comic book title at the top center. To ensure it fits perfectly and does not get cropped horizontally, the title MUST be split into two lines:
-Line 1: "${userName.toUpperCase()} EN" (Make this line exceptionally LARGE, 25% larger than line 2)
-Line 2: "KPMG" (Make this line 25% smaller than line 1)
-Keep the text perfectly centered and leave wide clear margins on the left and right edges.
-IMPORTANT: DO NOT include any white borders, frames, or margins around the image. The artwork MUST bleed fully to the edges.
+Text: The image MUST include a bold, stylish comic book title placed at the top-center area directly over the background artwork. The title MUST be split into two lines:
+Line 1: "${userName.toUpperCase()} EN" (exceptionally LARGE font. SPELL THE NAME EXACTLY AS: ${userName.toUpperCase()})
+Line 2: "KPMG" (slightly smaller than line 1. SPELL THE BRAND EXACTLY AS: K-P-M-G. DO NOT write KMPMG, KMPG, or any other variation. Exactly 4 letters: K, P, M, G)
+EXTREMELY IMPORTANT: Verify letter by letter that it says exactly "${userName.toUpperCase()} EN KPMG". Any misspelling is a critical failure.
 `;
 
 // 2. Page 1 — interpret user's story opening from both texts
@@ -92,6 +88,6 @@ export const BACK_COVER_PROMPT_TEMPLATE = () => `
 ${STYLE_PROMPT}
 ${NO_TEXT_PROMPT}
 Context: The End / Legacy.
-Action: The character walking into a bright sunset or standing on a mountain top looking at a futuristic city.
-Atmosphere: Epic, peaceful, legendary.
+Action: The character standing tall and centered in the frame, facing the viewer heroically, with a dramatic epic city skyline and glowing light behind them.
+Atmosphere: Epic, powerful, legendary.
 `;

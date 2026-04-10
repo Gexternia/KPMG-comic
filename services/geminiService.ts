@@ -95,6 +95,73 @@ function describeImageResponseError(response: {
 }
 
 /**
+ * Detects and crops letterbox/white borders baked into an AI-generated image.
+ * Scans edge pixels; if significant white borders found, crops them out.
+ * Returns a clean data URL (original untouched if no borders detected).
+ */
+async function cropWhiteBorders(dataUrl: string): Promise<string> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) { resolve(dataUrl); return; }
+      ctx.drawImage(img, 0, 0);
+
+      const { width, height } = canvas;
+      const imageData = ctx.getImageData(0, 0, width, height).data;
+
+      const isWhite = (x: number, y: number): boolean => {
+        const idx = (y * width + x) * 4;
+        return imageData[idx] > 230 && imageData[idx + 1] > 230 && imageData[idx + 2] > 230;
+      };
+
+      const rowIsWhite = (y: number): boolean => {
+        for (let x = 0; x < width; x++) if (!isWhite(x, y)) return false;
+        return true;
+      };
+
+      const colIsWhite = (x: number): boolean => {
+        for (let y = 0; y < height; y++) if (!isWhite(x, y)) return false;
+        return true;
+      };
+
+      let top = 0; while (top < height && rowIsWhite(top)) top++;
+      let bottom = 0; while (bottom < height && rowIsWhite(height - 1 - bottom)) bottom++;
+      let left = 0; while (left < width && colIsWhite(left)) left++;
+      let right = 0; while (right < width && colIsWhite(width - 1 - right)) right++;
+
+      const threshold = Math.min(width, height) * 0.01;
+      if (top < threshold && bottom < threshold && left < threshold && right < threshold) {
+        resolve(dataUrl);
+        return;
+      }
+
+      const cropX = left;
+      const cropY = top;
+      const cropW = width - left - right;
+      const cropH = height - top - bottom;
+
+      if (cropW <= 0 || cropH <= 0) { resolve(dataUrl); return; }
+
+      const out = document.createElement('canvas');
+      out.width = cropW;
+      out.height = cropH;
+      const outCtx = out.getContext('2d');
+      if (!outCtx) { resolve(dataUrl); return; }
+      outCtx.drawImage(canvas, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+
+      console.info(`[cropWhiteBorders] Cropped borders: top=${top} bottom=${bottom} left=${left} right=${right}`);
+      resolve(out.toDataURL('image/jpeg', 0.95));
+    };
+    img.onerror = () => resolve(dataUrl);
+    img.src = dataUrl;
+  });
+}
+
+/**
  * Helper to generate a single panel image
  */
 async function generatePanel(base64Image: string, prompt: string): Promise<string> {
@@ -117,13 +184,12 @@ async function generatePanel(base64Image: string, prompt: string): Promise<strin
       },
     ],
     config: {
-      // Imagen + posible texto auxiliar; solo IMAGE a veces devuelve candidatos sin `content`.
       responseModalities: [Modality.TEXT, Modality.IMAGE],
     },
   });
 
   const dataUrl = extractImageDataUrl(response);
-  if (dataUrl) return dataUrl;
+  if (dataUrl) return cropWhiteBorders(dataUrl);
 
   const detail = describeImageResponseError(response);
   console.error("Gemini image response:", response);
