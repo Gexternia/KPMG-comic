@@ -41,12 +41,9 @@ Keep each value short (max 15 words). Professional KPMG context is fine; match t
 // 1. Cover
 export const COVER_PROMPT_TEMPLATE = (userName: string) => `
 ${STYLE_PROMPT}
+${NO_TEXT_PROMPT}
 Context: A comic book cover.
 Action: A heroic "Hero Shot" of the character looking confident and strong, maybe arms crossed or pointing forward.
-Text: The image MUST include a bold, stylish comic book title placed at the top-center area directly over the background artwork. The title MUST be split into two lines:
-Line 1: "${userName.toUpperCase()} EN" (exceptionally LARGE font. SPELL THE NAME EXACTLY AS: ${userName.toUpperCase()})
-Line 2: "KPMG" (slightly smaller than line 1. SPELL THE BRAND EXACTLY AS: K-P-M-G. DO NOT write KMPMG, KMPG, or any other variation. Exactly 4 letters: K, P, M, G)
-EXTREMELY IMPORTANT: Verify letter by letter that it says exactly "${userName.toUpperCase()} EN KPMG". Any misspelling is a critical failure.
 `;
 
 // 2. Page 1 — interpret user's story opening from both texts

@@ -71,7 +71,7 @@ function App() {
         return (
           <div className="flex flex-col items-center justify-center min-h-screen p-8 text-center space-y-8 animate-fade-in text-white">
             <h1 className="text-6xl md:text-8xl comic-title text-white">
-              MAKE YOUR HISTORY
+              MAKE YOUR STORY
             </h1>
             <p className="text-xl md:text-3xl font-bold max-w-2xl bg-white border-4 border-black p-4 md:p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transform -rotate-1 text-[#00338D]">
               ¡Convierte tu historia en KPMG en un cómic único!
@@ -123,7 +123,7 @@ function App() {
       case AppStep.PREVIEW:
         if (!comicPages) return null;
         return (
-          <ComicPrintView comic={comicPages} onReset={handleReset} />
+          <ComicPrintView comic={comicPages} userName={userData.userName} onReset={handleReset} />
         );
       
       default:
