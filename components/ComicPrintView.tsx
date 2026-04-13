@@ -22,10 +22,11 @@ const PRINT_PANEL_BG =
 
 interface ComicPrintViewProps {
   comic: ComicPages;
+  userName: string;
   onReset: () => void;
 }
 
-export const ComicPrintView: React.FC<ComicPrintViewProps> = ({ comic, onReset }) => {
+export const ComicPrintView: React.FC<ComicPrintViewProps> = ({ comic, userName, onReset }) => {
   
   const handlePrint = () => {
     window.print();
@@ -45,7 +46,7 @@ export const ComicPrintView: React.FC<ComicPrintViewProps> = ({ comic, onReset }
               <RefreshCcw className="mr-1 w-4 h-4" /> REINICIAR
             </Button>
             <Button onClick={handlePrint} variant="primary" className="text-xs py-2 px-4 shadow-none border-2">
-              <Printer className="mr-1 w-4 h-4" /> IMPRIMIR FANZINE
+              <Printer className="mr-1 w-4 h-4" /> IMPRIMIR COMIC
             </Button>
           </div>
           <p className="text-gray-400 text-xs text-center max-w-[250px]">
@@ -59,7 +60,7 @@ export const ComicPrintView: React.FC<ComicPrintViewProps> = ({ comic, onReset }
         
         {/* Cover */}
         <div className="bg-white border-4 border-black p-2 shadow-[8px_8px_0px_0px_rgba(255,255,255,0.2)] text-[#00338D]">
-            <h3 className="comic-title text-center text-xl mb-2">PORTADA</h3>
+            <h3 className="comic-title text-center text-xl mb-2 uppercase break-words w-full px-2" style={{ letterSpacing: '-0.5px' }}>{userName} EN KPMG</h3>
             {comic.cover && <img src={comic.cover} className="w-full border-2 border-black" alt="Portada" />}
         </div>
 
@@ -133,10 +134,10 @@ export const ComicPrintView: React.FC<ComicPrintViewProps> = ({ comic, onReset }
       {/* === PRINT LAYOUT (Hidden on Screen, Visible on Print) === */}
       {/* This uses the specific 8-panel zine layout (inverted top row) */}
       <div
-        className="print-fanzine-layout hidden print:grid print:fixed print:inset-0 print:z-[100] print:box-border print:!bg-[#e8edf5]"
+        className="print-fanzine-layout hidden print:grid print:z-[100] print:box-border print:!bg-[#e8edf5]"
         style={{
-          width: '100vw',
-          height: '100vh',
+          width: '297mm',
+          height: '210mm',
           gridTemplateColumns: 'repeat(4, 1fr)',
           gridTemplateRows: 'repeat(2, 1fr)',
           pageBreakAfter: 'avoid'
@@ -147,6 +148,10 @@ export const ComicPrintView: React.FC<ComicPrintViewProps> = ({ comic, onReset }
           {comic.cover && (
             <img src={comic.cover} alt="Cover" className="print-ia-fill-height z-0" />
           )}
+          <div className="absolute bottom-12 left-0 right-0 z-10 flex flex-col items-center pointer-events-none px-2 drop-shadow-[2px_2px_0_#000]" style={{ letterSpacing: '-1px' }}>
+            <h2 className="text-[34px] text-white uppercase leading-[1.1] text-center w-full" style={{ fontFamily: "'KPMGBold', 'Arial Black', sans-serif", WebkitTextStroke: '1px rgba(0,0,0,0.4)' }}>{userName}</h2>
+            <h2 className="text-[46px] text-white uppercase leading-none text-center mt-0.5" style={{ fontFamily: "'KPMGBold', 'Arial Black', sans-serif", WebkitTextStroke: '1px rgba(0,0,0,0.4)' }}>EN KPMG</h2>
+          </div>
           <div className="absolute bottom-2 right-2 z-10 bg-black text-white px-2 py-0.5 text-xs font-bold">#1</div>
         </div>
 

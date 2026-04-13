@@ -113,25 +113,28 @@ async function cropWhiteBorders(dataUrl: string): Promise<string> {
       const { width, height } = canvas;
       const imageData = ctx.getImageData(0, 0, width, height).data;
 
-      const isWhite = (x: number, y: number): boolean => {
+      const isBg = (x: number, y: number): boolean => {
         const idx = (y * width + x) * 4;
-        return imageData[idx] > 230 && imageData[idx + 1] > 230 && imageData[idx + 2] > 230;
+        const r = imageData[idx], g = imageData[idx + 1], b = imageData[idx + 2];
+        return (r > 200 && g > 200 && b > 200) || (r < 50 && g < 50 && b < 50);
       };
 
-      const rowIsWhite = (y: number): boolean => {
-        for (let x = 0; x < width; x++) if (!isWhite(x, y)) return false;
-        return true;
+      const rowIsBorder = (y: number): boolean => {
+        let count = 0;
+        for (let x = 0; x < width; x++) if (isBg(x, y)) count++;
+        return count > width * 0.85;
       };
 
-      const colIsWhite = (x: number): boolean => {
-        for (let y = 0; y < height; y++) if (!isWhite(x, y)) return false;
-        return true;
+      const colIsBorder = (x: number): boolean => {
+        let count = 0;
+        for (let y = 0; y < height; y++) if (isBg(x, y)) count++;
+        return count > height * 0.85;
       };
 
-      let top = 0; while (top < height && rowIsWhite(top)) top++;
-      let bottom = 0; while (bottom < height && rowIsWhite(height - 1 - bottom)) bottom++;
-      let left = 0; while (left < width && colIsWhite(left)) left++;
-      let right = 0; while (right < width && colIsWhite(width - 1 - right)) right++;
+      let top = 0; while (top < height && rowIsBorder(top)) top++;
+      let bottom = 0; while (bottom < height && rowIsBorder(height - 1 - bottom)) bottom++;
+      let left = 0; while (left < width && colIsBorder(left)) left++;
+      let right = 0; while (right < width && colIsBorder(width - 1 - right)) right++;
 
       const threshold = Math.min(width, height) * 0.01;
       if (top < threshold && bottom < threshold && left < threshold && right < threshold) {
