@@ -32,6 +32,10 @@ export const ComicPrintView: React.FC<ComicPrintViewProps> = ({ comic, userName,
     window.print();
   };
 
+  const userNameWords = userName.trim().split(/\s+/);
+  const nameNeedsShrink = userNameWords.some(w => w.length > 10);
+  const nameTextClass = nameNeedsShrink ? 'text-[28px]' : 'text-[34px]';
+
   return (
     <div className="h-screen w-full overflow-y-auto bg-gray-900 pb-20 print:!h-auto print:!min-h-0 print:!bg-white print:!p-0 print:!pb-0 print:!overflow-visible">
       
@@ -148,22 +152,19 @@ export const ComicPrintView: React.FC<ComicPrintViewProps> = ({ comic, userName,
           {comic.cover && (
             <img src={comic.cover} alt="Cover" className="print-ia-fill-height z-0" />
           )}
-          <div className="absolute bottom-12 left-0 right-0 z-10 flex flex-col items-center pointer-events-none px-2 drop-shadow-[2px_2px_0_#000]" style={{ letterSpacing: '-1px' }}>
-            <h2 className="text-[34px] text-white uppercase leading-[1.1] text-center w-full" style={{ fontFamily: "'KPMGBold', 'Arial Black', sans-serif", WebkitTextStroke: '1px rgba(0,0,0,0.4)' }}>{userName}</h2>
-            <h2 className="text-[46px] text-white uppercase leading-none text-center mt-0.5" style={{ fontFamily: "'KPMGBold', 'Arial Black', sans-serif", WebkitTextStroke: '1px rgba(0,0,0,0.4)' }}>EN KPMG</h2>
+          <div className="absolute bottom-12 left-0 right-0 z-10 flex flex-col items-center pointer-events-none px-4 drop-shadow-[2px_2px_0_#000]" style={{ letterSpacing: nameNeedsShrink ? '-1.5px' : '-1px' }}>
+            <h2 className={`${nameTextClass} text-white uppercase leading-[1.1] text-center w-full`} style={{ fontFamily: "'KPMGBold', 'Arial Black', sans-serif", WebkitTextStroke: '1px rgba(0,0,0,0.4)' }}>{userName}</h2>
+            <h2 className="text-[41px] text-white uppercase leading-none text-center mt-0.5" style={{ fontFamily: "'KPMGBold', 'Arial Black', sans-serif", WebkitTextStroke: '1px rgba(0,0,0,0.4)' }}>EN KPMG</h2>
           </div>
-          <div className="absolute bottom-2 right-2 z-10 bg-black text-white px-2 py-0.5 text-xs font-bold">#1</div>
         </div>
 
         {/* 2–3. Páginas 5 y 6: PNGs de marca */}
         <div className="min-h-0 min-w-0 border-r-2 border-b-2 border-black relative overflow-hidden bg-[#1E49E2] p-0 rotate-180">
             <img src={FANZINE_PAGE_6_SRC} alt="" className="absolute inset-0 h-full w-full object-cover object-center" />
-            <div className="absolute bottom-1 right-1 z-10 text-[10px] font-bold bg-white px-1 border border-black text-[#00338D]">6</div>
         </div>
 
         <div className="min-h-0 min-w-0 border-r-2 border-b-2 border-black relative overflow-hidden bg-[#1E49E2] p-0 rotate-180">
             <img src={FANZINE_PAGE_5_SRC} alt="" className="absolute inset-0 h-full w-full object-cover object-center" />
-            <div className="absolute bottom-1 right-1 z-10 text-[10px] font-bold bg-white px-1 border border-black text-[#00338D]">5</div>
         </div>
 
         {/* 4. CONTRAPORTADA IA */}
@@ -171,8 +172,8 @@ export const ComicPrintView: React.FC<ComicPrintViewProps> = ({ comic, userName,
            {comic.backCover && (
              <img src={comic.backCover} alt="Back Cover" className="print-ia-fill-height z-0" />
            )}
-           <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none bg-black/25 print:bg-black/20">
-             <h2 className="text-5xl comic-title text-white drop-shadow-[2px_2px_0_#000]" style={{ fontFamily: "'KPMGBold', 'Arial Black', sans-serif", WebkitTextStroke: '1px rgba(0,0,0,0.4)' }}>FIN</h2>
+           <div className="absolute inset-0 z-10 pointer-events-none bg-black/25 print:bg-black/20">
+             <h2 className="absolute top-[75%] w-full text-center -translate-y-1/2 text-5xl comic-title text-white drop-shadow-[2px_2px_0_#000]" style={{ fontFamily: "'KPMGBold', 'Arial Black', sans-serif", WebkitTextStroke: '1px rgba(0,0,0,0.4)' }}>FIN</h2>
            </div>
         </div>
 
