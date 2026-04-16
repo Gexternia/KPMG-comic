@@ -183,7 +183,6 @@ export const ComicPrintView: React.FC<ComicPrintViewProps> = ({ comic, userName,
            <div className="absolute top-1.5 left-1.5 right-1.5 z-10 bg-[#0091DA] border-2 border-black p-1.5 shadow-sm text-white">
                 <p className="text-xs font-bold font-comic leading-tight">{comic.captions.p1}</p>
             </div>
-           <div className="absolute bottom-1 right-1 z-10 text-[10px] font-bold bg-white px-1 border border-black text-[#00338D]">1</div>
         </div>
 
         <div className={`min-h-0 min-w-0 border-r-2 border-t-2 border-black relative overflow-hidden ${PRINT_PANEL_BG} p-0`}>
@@ -191,7 +190,6 @@ export const ComicPrintView: React.FC<ComicPrintViewProps> = ({ comic, userName,
            <div className="absolute bottom-4 left-1.5 right-1.5 z-10 bg-[#00A3A1] border-2 border-black p-1.5 shadow-sm text-white">
                 <p className="text-xs font-bold font-comic leading-tight">{comic.captions.p2}</p>
             </div>
-           <div className="absolute bottom-1 right-1 z-10 text-[10px] font-bold bg-white px-1 border border-black text-[#00338D]">2</div>
         </div>
 
         <div className={`min-h-0 min-w-0 border-r-2 border-t-2 border-black relative overflow-hidden ${PRINT_PANEL_BG} p-0`}>
@@ -199,7 +197,6 @@ export const ComicPrintView: React.FC<ComicPrintViewProps> = ({ comic, userName,
            <div className="absolute bottom-4 left-1.5 right-1.5 z-10 bg-[#483698] border-2 border-black p-1.5 shadow-sm text-white">
                 <p className="text-xs font-bold font-comic leading-tight">{comic.captions.p3}</p>
             </div>
-           <div className="absolute bottom-1 right-1 z-10 text-[10px] font-bold bg-white px-1 border border-black text-[#00338D]">3</div>
         </div>
 
         <div className={`min-h-0 min-w-0 border-l-0 border-t-2 border-black relative overflow-hidden ${PRINT_PANEL_BG} p-0`}>
@@ -207,7 +204,6 @@ export const ComicPrintView: React.FC<ComicPrintViewProps> = ({ comic, userName,
            <div className="absolute top-4 left-2 right-2 z-10 bg-[#6D2077] border-2 border-black p-1.5 shadow-sm text-white">
                 <p className="text-xs font-bold font-comic leading-tight">{comic.captions.p4}</p>
             </div>
-           <div className="absolute bottom-1 right-1 z-10 text-[10px] font-bold bg-white px-1 border border-black text-[#00338D]">4</div>
         </div>
 
          {/* Fold Guides */}
