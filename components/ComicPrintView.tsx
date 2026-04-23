@@ -180,7 +180,7 @@ export const ComicPrintView: React.FC<ComicPrintViewProps> = ({ comic, userName,
         {/* 5–8. Viñetas IA + captions */}
         <div className={`min-h-0 min-w-0 border-r-2 border-t-2 border-black relative overflow-hidden ${PRINT_PANEL_BG} p-0`}>
            {comic.p1 && <img src={comic.p1} alt="Page 1" className="print-ia-fill-height z-0" />}
-           <div className="absolute top-1.5 left-1.5 right-1.5 z-10 bg-[#0091DA] border-2 border-black p-1.5 shadow-sm text-white">
+           <div className="absolute top-1.5 left-5 right-1.5 z-10 bg-[#0091DA] border-2 border-black p-1.5 shadow-sm text-white">
                 <p className="text-xs font-bold font-comic leading-tight">{comic.captions.p1}</p>
             </div>
         </div>
