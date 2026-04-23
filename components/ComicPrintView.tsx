@@ -7,9 +7,9 @@
      font-style: normal;
    }
 */
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import { ComicPages } from '../types';
-import { Printer, RefreshCcw } from 'lucide-react';
+import { FileDown, Printer, RefreshCcw } from 'lucide-react';
 import { Button } from './Button';
 
 /** Páginas 5 y 6 del fanzine (no generadas por IA): gráficas de marca / evento */
@@ -27,9 +27,78 @@ interface ComicPrintViewProps {
 }
 
 export const ComicPrintView: React.FC<ComicPrintViewProps> = ({ comic, userName, onReset }) => {
-  
+  const printLayoutRef = useRef<HTMLDivElement>(null);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleDownloadPdf = async () => {
+    const printLayout = printLayoutRef.current;
+    if (!printLayout || isDownloadingPdf) return;
+
+    setIsDownloadingPdf(true);
+
+    try {
+      const documentHead = document.head;
+      const styleSources = Array.from(
+        documentHead.querySelectorAll('style, link[rel="stylesheet"], link[rel="preconnect"], link[href*="fonts.googleapis"], link[href*="fonts.gstatic"]')
+      )
+        .map((node) => node.outerHTML)
+        .join('\n');
+
+      const printHtml = `
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <base href="${window.location.origin}/" />
+    ${styleSources}
+  </head>
+  <body style="margin:0;padding:0;background:white;">
+    ${printLayout.outerHTML}
+  </body>
+</html>
+      `.trim();
+
+      const safeName = userName
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+
+      const response = await fetch('/api/print-pdf', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          html: printHtml,
+          fileName: safeName || 'comic-kpmg'
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `${safeName || 'comic-kpmg'}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error(error);
+      alert('No se pudo generar el PDF. Por favor intenta de nuevo.');
+    } finally {
+      setIsDownloadingPdf(false);
+    }
   };
 
   const userNameWords = userName.trim().split(/\s+/);
@@ -51,6 +120,14 @@ export const ComicPrintView: React.FC<ComicPrintViewProps> = ({ comic, userName,
             </Button>
             <Button onClick={handlePrint} variant="primary" className="text-xs py-2 px-4 shadow-none border-2">
               <Printer className="mr-1 w-4 h-4" /> IMPRIMIR COMIC
+            </Button>
+            <Button
+              onClick={handleDownloadPdf}
+              variant="secondary"
+              className="text-xs py-2 px-4 shadow-none border-2"
+              disabled={isDownloadingPdf}
+            >
+              <FileDown className="mr-1 w-4 h-4" /> {isDownloadingPdf ? 'GENERANDO...' : 'DESCARGAR PDF'}
             </Button>
           </div>
           <p className="text-gray-400 text-xs text-center max-w-[250px]">
@@ -138,6 +215,7 @@ export const ComicPrintView: React.FC<ComicPrintViewProps> = ({ comic, userName,
       {/* === PRINT LAYOUT (Hidden on Screen, Visible on Print) === */}
       {/* This uses the specific 8-panel zine layout (inverted top row) */}
       <div
+        ref={printLayoutRef}
         className="print-fanzine-layout hidden print:grid print:z-[100] print:box-border print:!bg-[#e8edf5]"
         style={{
           width: '297mm',
