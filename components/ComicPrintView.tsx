@@ -114,21 +114,25 @@ export const ComicPrintView: React.FC<ComicPrintViewProps> = ({ comic, userName,
           <h1 className="text-white text-3xl comic-title tracking-wide drop-shadow-md text-center leading-none">
             ¡TU CÓMIC ESTÁ LISTO!
           </h1>
-          <div className="flex gap-3 w-full justify-center">
-            <Button onClick={onReset} variant="danger" className="text-xs py-2 px-4 shadow-none border-2">
+          <div className="w-full space-y-2">
+            <div className="grid w-full grid-cols-2 gap-2">
+              <Button onClick={onReset} variant="danger" className="w-full text-xs py-2 px-3 shadow-none border-2">
               <RefreshCcw className="mr-1 w-4 h-4" /> REINICIAR
-            </Button>
-            <Button onClick={handlePrint} variant="primary" className="text-xs py-2 px-4 shadow-none border-2">
+              </Button>
+              <Button onClick={handlePrint} variant="primary" className="w-full text-xs py-2 px-3 shadow-none border-2">
               <Printer className="mr-1 w-4 h-4" /> IMPRIMIR COMIC
-            </Button>
-            <Button
-              onClick={handleDownloadPdf}
-              variant="secondary"
-              className="text-xs py-2 px-4 shadow-none border-2"
-              disabled={isDownloadingPdf}
-            >
-              <FileDown className="mr-1 w-4 h-4" /> {isDownloadingPdf ? 'GENERANDO...' : 'DESCARGAR PDF'}
-            </Button>
+              </Button>
+            </div>
+            <div className="flex justify-center">
+              <Button
+                onClick={handleDownloadPdf}
+                variant="secondary"
+                className="w-[calc(50%-0.25rem)] text-xs py-2 px-3 shadow-none border-2"
+                disabled={isDownloadingPdf}
+              >
+                <FileDown className="mr-1 w-4 h-4" /> {isDownloadingPdf ? 'GENERANDO...' : 'DESCARGAR PDF'}
+              </Button>
+            </div>
           </div>
           <p className="text-gray-400 text-xs text-center max-w-[250px]">
             Abajo ves la versión digital. Dale a imprimir para obtener el formato plegable A4.
