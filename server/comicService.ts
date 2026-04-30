@@ -19,6 +19,8 @@ const MAX_PENDING_COMIC_REQUESTS = Number(process.env.MAX_PENDING_COMIC_REQUESTS
 
 let activeComicGenerations = 0;
 const pendingResolvers: Array<() => void> = [];
+const PRIMARY_KEY_INDEX = 0;
+const SECONDARY_KEY_INDEX = 1;
 
 export interface ComicRequest {
   userName: string;
@@ -84,12 +86,51 @@ function releaseGenerationSlot(): void {
   if (next) next();
 }
 
-function getApiKey(): string {
-  const key = process.env.GEMINI_API_KEY || process.env.VITE_API_KEY;
-  if (!key) {
-    throw new HttpError(503, "Configuración incompleta: falta GEMINI_API_KEY.", "config_missing_api_key");
+function getGeminiApiKeys(): [string, string?] {
+  const primaryKey =
+    process.env.GEMINI_API_KEY_1 ||
+    process.env.GEMINI_API_KEY ||
+    process.env.VITE_API_KEY;
+  const secondaryKey = process.env.GEMINI_API_KEY_2;
+
+  if (!primaryKey) {
+    throw new HttpError(503, "Configuración incompleta: falta GEMINI_API_KEY_1 o GEMINI_API_KEY.", "config_missing_api_key");
   }
-  return key;
+
+  return [primaryKey, secondaryKey];
+}
+
+function pickKeyIndexByPanelPosition(position: number): number {
+  return position % 2 === 0 ? PRIMARY_KEY_INDEX : SECONDARY_KEY_INDEX;
+}
+
+function createAiClients(): GoogleGenAI[] {
+  const [primaryKey, secondaryKey] = getGeminiApiKeys();
+  const clients = [new GoogleGenAI({ apiKey: primaryKey })];
+  if (secondaryKey) {
+    clients.push(new GoogleGenAI({ apiKey: secondaryKey }));
+  }
+  return clients;
+}
+
+async function generatePanelWithFallback(
+  aiClients: GoogleGenAI[],
+  preferredKeyIndex: number,
+  base64Image: string,
+  prompt: string
+): Promise<string> {
+  const first = aiClients[preferredKeyIndex] ?? aiClients[PRIMARY_KEY_INDEX];
+  const second =
+    aiClients.length > 1
+      ? aiClients[preferredKeyIndex === PRIMARY_KEY_INDEX ? SECONDARY_KEY_INDEX : PRIMARY_KEY_INDEX]
+      : undefined;
+
+  try {
+    return await generatePanel(first, base64Image, prompt);
+  } catch (error) {
+    if (!second) throw error;
+    return generatePanel(second, base64Image, prompt);
+  }
 }
 
 function validateRequest(payload: unknown): ComicRequest {
@@ -228,18 +269,22 @@ export async function generateComicFromPayload(rawPayload: unknown): Promise<Com
   const releaseSlot = await acquireGenerationSlot();
   try {
   const payload = validateRequest(rawPayload);
-  const ai = new GoogleGenAI({ apiKey: getApiKey() });
+  const aiClients = createAiClients();
+  const primaryAi = aiClients[PRIMARY_KEY_INDEX];
   const cleanImage = cleanBase64Image(payload.photo);
 
-  const storyPromise = generateStory(ai, payload);
-  const imagePromises = [
-    generatePanel(ai, cleanImage, COVER_PROMPT_TEMPLATE(payload.userName)),
-    generatePanel(ai, cleanImage, P1_PROMPT_TEMPLATE(payload.worstMoment, payload.bestMoment)),
-    generatePanel(ai, cleanImage, P2_PROMPT_TEMPLATE(payload.worstMoment)),
-    generatePanel(ai, cleanImage, P3_PROMPT_TEMPLATE(payload.worstMoment, payload.bestMoment)),
-    generatePanel(ai, cleanImage, P4_PROMPT_TEMPLATE(payload.bestMoment)),
-    generatePanel(ai, cleanImage, BACK_COVER_PROMPT_TEMPLATE()),
+  const storyPromise = generateStory(primaryAi, payload);
+  const panelPrompts = [
+    COVER_PROMPT_TEMPLATE(payload.userName),
+    P1_PROMPT_TEMPLATE(payload.worstMoment, payload.bestMoment),
+    P2_PROMPT_TEMPLATE(payload.worstMoment),
+    P3_PROMPT_TEMPLATE(payload.worstMoment, payload.bestMoment),
+    P4_PROMPT_TEMPLATE(payload.bestMoment),
+    BACK_COVER_PROMPT_TEMPLATE(),
   ];
+  const imagePromises = panelPrompts.map((prompt, index) =>
+    generatePanelWithFallback(aiClients, pickKeyIndexByPanelPosition(index), cleanImage, prompt)
+  );
 
   const [captions, [cover, p1, p2, p3, p4, backCover]] = await Promise.all([
     storyPromise,
