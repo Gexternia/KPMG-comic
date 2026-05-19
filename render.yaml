@@ -1,0 +1,22 @@
+# https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: kpmg-comic
+    runtime: node
+    plan: starter
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: REPLICATE_API_TOKEN
+        sync: false
+      - key: REPLICATE_IMAGE_MODEL
+        value: black-forest-labs/flux-kontext-pro
+      - key: REPLICATE_REQUEST_TIMEOUT_MS
+        value: "180000"
+      - key: AI_REQUEST_TIMEOUT_MS
+        value: "60000"
