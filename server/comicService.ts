@@ -1,6 +1,5 @@
-import { GoogleGenAI, Modality } from "@google/genai";
+import { GoogleGenAI } from "@google/genai";
 import {
-  MODEL_NAME,
   TEXT_MODEL_NAME,
   STORY_PROMPT,
   COVER_PROMPT_TEMPLATE,
@@ -9,18 +8,22 @@ import {
   P2_PROMPT_TEMPLATE,
   P3_PROMPT_TEMPLATE,
   P4_PROMPT_TEMPLATE,
+  GLOBAL_NEGATIVE_PROMPT,
+  COVER_DIMENSIONS,
+  PANEL_DIMENSIONS,
+  BACK_COVER_DIMENSIONS,
 } from "../constants";
 import { HttpError } from "./errors";
+import { envNumber, envString } from "./env";
+import { generateAllPanels, type PanelInput } from "./providers/replicateImages";
 
-const AI_REQUEST_TIMEOUT_MS = Number(process.env.AI_REQUEST_TIMEOUT_MS || 60_000);
-const MAX_CONCURRENT_COMIC_GENERATIONS = Number(process.env.MAX_CONCURRENT_COMIC_GENERATIONS || 2);
-const CONCURRENCY_WAIT_TIMEOUT_MS = Number(process.env.CONCURRENCY_WAIT_TIMEOUT_MS || 8_000);
-const MAX_PENDING_COMIC_REQUESTS = Number(process.env.MAX_PENDING_COMIC_REQUESTS || 20);
+const GEMINI_REQUEST_TIMEOUT_MS = envNumber("AI_REQUEST_TIMEOUT_MS", 60_000);
+const MAX_CONCURRENT_COMIC_GENERATIONS = envNumber("MAX_CONCURRENT_COMIC_GENERATIONS", 2);
+const CONCURRENCY_WAIT_TIMEOUT_MS = envNumber("CONCURRENCY_WAIT_TIMEOUT_MS", 8_000);
+const MAX_PENDING_COMIC_REQUESTS = envNumber("MAX_PENDING_COMIC_REQUESTS", 20);
 
 let activeComicGenerations = 0;
 const pendingResolvers: Array<() => void> = [];
-const PRIMARY_KEY_INDEX = 0;
-const SECONDARY_KEY_INDEX = 1;
 
 export interface ComicRequest {
   userName: string;
@@ -86,50 +89,21 @@ function releaseGenerationSlot(): void {
   if (next) next();
 }
 
-function getGeminiApiKeys(): [string, string?] {
-  const primaryKey =
-    process.env.GEMINI_API_KEY_1 ||
-    process.env.GEMINI_API_KEY ||
-    process.env.VITE_API_KEY;
-  const secondaryKey = process.env.GEMINI_API_KEY_2;
+function getGeminiApiKey(): string {
+  const key =
+    envString("GEMINI_API_KEY_1") ||
+    envString("GEMINI_API_KEY") ||
+    envString("VITE_API_KEY");
 
-  if (!primaryKey) {
+  if (!key) {
     throw new HttpError(503, "Configuración incompleta: falta GEMINI_API_KEY_1 o GEMINI_API_KEY.", "config_missing_api_key");
   }
-
-  return [primaryKey, secondaryKey];
+  return key;
 }
 
-function pickKeyIndexByPanelPosition(position: number): number {
-  return position % 2 === 0 ? PRIMARY_KEY_INDEX : SECONDARY_KEY_INDEX;
-}
-
-function createAiClients(): GoogleGenAI[] {
-  const [primaryKey, secondaryKey] = getGeminiApiKeys();
-  const clients = [new GoogleGenAI({ apiKey: primaryKey })];
-  if (secondaryKey) {
-    clients.push(new GoogleGenAI({ apiKey: secondaryKey }));
-  }
-  return clients;
-}
-
-async function generatePanelWithFallback(
-  aiClients: GoogleGenAI[],
-  preferredKeyIndex: number,
-  base64Image: string,
-  prompt: string
-): Promise<string> {
-  const first = aiClients[preferredKeyIndex] ?? aiClients[PRIMARY_KEY_INDEX];
-  const second =
-    aiClients.length > 1
-      ? aiClients[preferredKeyIndex === PRIMARY_KEY_INDEX ? SECONDARY_KEY_INDEX : PRIMARY_KEY_INDEX]
-      : undefined;
-
-  try {
-    return await generatePanel(first, base64Image, prompt);
-  } catch (error) {
-    if (!second) throw error;
-    return generatePanel(second, base64Image, prompt);
+function validateReplicateConfig(): void {
+  if (!envString("REPLICATE_API_TOKEN")) {
+    throw new HttpError(503, "Configuración incompleta: falta REPLICATE_API_TOKEN.", "config_missing_replicate_token");
   }
 }
 
@@ -149,26 +123,9 @@ function validateRequest(payload: unknown): ComicRequest {
   return { userName, worstMoment, bestMoment, photo };
 }
 
-function cleanBase64Image(image: string): string {
-  return image.replace(/^data:image\/(png|jpg|jpeg|webp);base64,/, "");
-}
-
-function extractImageDataUrl(response: {
-  candidates?: Array<{
-    content?: { parts?: Array<{ inlineData?: { mimeType?: string; data?: string } }> };
-  }>;
-}): string | null {
-  for (const candidate of response.candidates ?? []) {
-    const parts = candidate.content?.parts ?? [];
-    for (const part of parts) {
-      const data = part.inlineData?.data;
-      if (data) {
-        const mime = part.inlineData?.mimeType?.startsWith("image/") ? part.inlineData.mimeType : "image/png";
-        return `data:${mime};base64,${data}`;
-      }
-    }
-  }
-  return null;
+function ensurePhotoIsDataUri(photo: string): string {
+  if (photo.startsWith("data:")) return photo;
+  return `data:image/jpeg;base64,${photo}`;
 }
 
 function sanitizeCaptions(raw: unknown): StoryCaptions {
@@ -202,7 +159,7 @@ async function generateStory(ai: GoogleGenAI, payload: ComicRequest): Promise<St
         }),
         config: { responseMimeType: "application/json" },
       }),
-      AI_REQUEST_TIMEOUT_MS,
+      GEMINI_REQUEST_TIMEOUT_MS,
       new HttpError(504, "Timeout al generar narrativa con IA.", "provider_timeout_story")
     );
 
@@ -213,93 +170,77 @@ async function generateStory(ai: GoogleGenAI, payload: ComicRequest): Promise<St
   }
 }
 
-async function generatePanel(ai: GoogleGenAI, base64Image: string, prompt: string): Promise<string> {
-  try {
-    const response = await withTimeout(
-      ai.models.generateContent({
-        model: MODEL_NAME,
-        contents: [
-          {
-            role: "user",
-            parts: [
-              {
-                inlineData: {
-                  mimeType: "image/jpeg",
-                  data: base64Image,
-                },
-              },
-              { text: prompt },
-            ],
-          },
-        ],
-        config: {
-          responseModalities: [Modality.TEXT, Modality.IMAGE],
-        },
-      }),
-      AI_REQUEST_TIMEOUT_MS,
-      new HttpError(504, "Timeout al llamar al proveedor de IA.", "provider_timeout")
-    );
-
-    const image = extractImageDataUrl(response);
-    if (!image) {
-      throw new HttpError(502, "La IA no devolvió imagen válida.", "provider_invalid_image_response");
-    }
-    return image;
-  } catch (error) {
-    const err = error as { status?: number; code?: number | string; message?: string };
-    const status = typeof err.status === "number" ? err.status : undefined;
-    const code = err.code;
-    const message = typeof err.message === "string" ? err.message.toLowerCase() : "";
-
-    if (message.includes("timeout") || code === "ETIMEDOUT") {
-      throw new HttpError(504, "Timeout al llamar al proveedor de IA.", "provider_timeout");
-    }
-    if (status === 429 || code === 429) {
-      throw new HttpError(503, "Proveedor de IA saturado temporalmente.", "provider_rate_limited");
-    }
-    if (status === 500 || status === 502 || status === 503 || status === 504) {
-      throw new HttpError(503, "Proveedor de IA no disponible temporalmente.", "provider_unavailable");
-    }
-    if (error instanceof HttpError) throw error;
-    throw new HttpError(502, "Error inesperado del proveedor de IA.", "provider_error");
-  }
+function buildPanelInputs(payload: ComicRequest): PanelInput[] {
+  return [
+    {
+      key: "cover",
+      prompt: COVER_PROMPT_TEMPLATE(payload.userName),
+      negativePrompt: GLOBAL_NEGATIVE_PROMPT,
+      dimensions: COVER_DIMENSIONS,
+    },
+    {
+      key: "p1",
+      prompt: P1_PROMPT_TEMPLATE(payload.worstMoment, payload.bestMoment),
+      negativePrompt: GLOBAL_NEGATIVE_PROMPT,
+      dimensions: PANEL_DIMENSIONS,
+    },
+    {
+      key: "p2",
+      prompt: P2_PROMPT_TEMPLATE(payload.worstMoment),
+      negativePrompt: GLOBAL_NEGATIVE_PROMPT,
+      dimensions: PANEL_DIMENSIONS,
+    },
+    {
+      key: "p3",
+      prompt: P3_PROMPT_TEMPLATE(payload.worstMoment, payload.bestMoment),
+      negativePrompt: GLOBAL_NEGATIVE_PROMPT,
+      dimensions: PANEL_DIMENSIONS,
+    },
+    {
+      key: "p4",
+      prompt: P4_PROMPT_TEMPLATE(payload.bestMoment),
+      negativePrompt: GLOBAL_NEGATIVE_PROMPT,
+      dimensions: PANEL_DIMENSIONS,
+    },
+    {
+      key: "backCover",
+      prompt: BACK_COVER_PROMPT_TEMPLATE(),
+      negativePrompt: GLOBAL_NEGATIVE_PROMPT,
+      dimensions: BACK_COVER_DIMENSIONS,
+    },
+  ];
 }
 
 export async function generateComicFromPayload(rawPayload: unknown): Promise<ComicResponse> {
   const releaseSlot = await acquireGenerationSlot();
   try {
-  const payload = validateRequest(rawPayload);
-  const aiClients = createAiClients();
-  const primaryAi = aiClients[PRIMARY_KEY_INDEX];
-  const cleanImage = cleanBase64Image(payload.photo);
+    const payload = validateRequest(rawPayload);
 
-  const storyPromise = generateStory(primaryAi, payload);
-  const panelPrompts = [
-    COVER_PROMPT_TEMPLATE(payload.userName),
-    P1_PROMPT_TEMPLATE(payload.worstMoment, payload.bestMoment),
-    P2_PROMPT_TEMPLATE(payload.worstMoment),
-    P3_PROMPT_TEMPLATE(payload.worstMoment, payload.bestMoment),
-    P4_PROMPT_TEMPLATE(payload.bestMoment),
-    BACK_COVER_PROMPT_TEMPLATE(),
-  ];
-  const imagePromises = panelPrompts.map((prompt, index) =>
-    generatePanelWithFallback(aiClients, pickKeyIndexByPanelPosition(index), cleanImage, prompt)
-  );
+    validateReplicateConfig();
+    const ai = new GoogleGenAI({ apiKey: getGeminiApiKey() });
 
-  const [captions, [cover, p1, p2, p3, p4, backCover]] = await Promise.all([
-    storyPromise,
-    Promise.all(imagePromises),
-  ]);
+    const photoDataUri = ensurePhotoIsDataUri(payload.photo);
+    const panels = buildPanelInputs(payload);
 
-  return {
-    cover,
-    p1,
-    p2,
-    p3,
-    p4,
-    backCover,
-    captions,
-  };
+    const [captions, panelResults] = await Promise.all([
+      generateStory(ai, payload),
+      generateAllPanels(panels, photoDataUri),
+    ]);
+
+    const byKey: Record<string, string> = {};
+    for (const result of panelResults) {
+      byKey[result.key] = result.dataUri;
+    }
+
+    return {
+      cover: byKey.cover,
+      p1: byKey.p1,
+      p2: byKey.p2,
+      p3: byKey.p3,
+      p4: byKey.p4,
+      backCover: byKey.backCover,
+      captions,
+    };
   } finally {
     releaseSlot();
   }

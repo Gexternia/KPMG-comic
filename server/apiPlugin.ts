@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { IncomingMessage, ServerResponse } from "node:http";
-import type { Connect } from "vite";
+import { loadEnv, type Connect } from "vite";
 import { generateComicFromPayload } from "./comicService";
 import { logError, logInfo } from "./logger";
 import { buildHealthJson, buildPrometheusMetrics, recordHttpMetric } from "./metrics";
@@ -212,12 +212,24 @@ const handler: Connect.NextHandleFunction = (req, res, next) => {
   next();
 };
 
+function applyServerEnv(root: string, mode: string): void {
+  Object.assign(process.env, loadEnv(mode, root, ""));
+}
+
 export const backendApiPlugin = () => ({
   name: "backend-api-plugin",
-  configureServer(server: { middlewares: { use: (fn: Connect.NextHandleFunction) => void } }) {
+  configureServer(server: {
+    config: { root: string; mode: string };
+    middlewares: { use: (fn: Connect.NextHandleFunction) => void };
+  }) {
+    applyServerEnv(server.config.root, server.config.mode);
     server.middlewares.use(handler);
   },
-  configurePreviewServer(server: { middlewares: { use: (fn: Connect.NextHandleFunction) => void } }) {
+  configurePreviewServer(server: {
+    config: { root: string; mode: string };
+    middlewares: { use: (fn: Connect.NextHandleFunction) => void };
+  }) {
+    applyServerEnv(server.config.root, server.config.mode);
     server.middlewares.use(handler);
   },
 });
