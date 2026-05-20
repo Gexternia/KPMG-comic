@@ -1,8 +1,6 @@
-export const TEXT_MODEL_NAME = 'gemini-2.5-flash';
+export const TEXT_MODEL_NAME = 'gpt-4.1-mini';
 
 export const STYLE_SUFFIX = `american comic book panel style, bold black ink outlines, halftone shading, KPMG corporate colors (deep blue, electric blue, teal accents), dynamic comic composition, vibrant flat colors, full bleed illustration edge to edge`;
-
-export const GLOBAL_NEGATIVE_PROMPT = `text, words, letters, captions, speech bubbles, logos, signs, signage, written content, watermarks, multiple faces, deformed face, distorted features, ugly, blurry, low quality, low resolution, photograph, photorealistic, 3d render, cartoon for kids, anime, manga, chibi, nsfw`;
 
 export const COVER_DIMENSIONS = { width: 768, height: 1024 };
 export const PANEL_DIMENSIONS = { width: 1024, height: 1024 };
@@ -34,17 +32,17 @@ Keep each value short (max 15 words). Professional KPMG context is fine; match t
 export const COVER_PROMPT_TEMPLATE = (_userName: string) =>
   `${IDENTITY} ${TRIGGER_SUBJECT}, confident KPMG consultant in business attire, arms crossed heroic pose, modern glass office with city skyline, dramatic lighting, three-quarter angle, ${STYLE_SUFFIX}`;
 
-export const P1_PROMPT_TEMPLATE = (_worst: string, _best: string) =>
-  `${IDENTITY} ${TRIGGER_SUBJECT}, KPMG consultant in modern corporate office, desk with monitors showing abstract data charts, glass walls and colleagues in background, wide medium shot showing full environment, focused expression, ${STYLE_SUFFIX}`;
+export const P1_PROMPT_TEMPLATE = (worst: string, best: string) =>
+  `${IDENTITY} ${TRIGGER_SUBJECT}, KPMG consultant in modern corporate office, desk with monitors showing abstract data charts, glass walls and colleagues in background, wide medium shot showing full environment, focused expression, visual scene inspired by this personal KPMG context: learning or challenge "${worst}", special memory "${best}", ${STYLE_SUFFIX}`;
 
-export const P2_PROMPT_TEMPLATE = (_worst: string) =>
-  `${IDENTITY} ${TRIGGER_SUBJECT}, KPMG consultant presenting abstract data visualizations on large screen to colleagues around glass conference table, gesturing with confidence, wide medium shot showing room and team, ${STYLE_SUFFIX}`;
+export const P2_PROMPT_TEMPLATE = (worst: string) =>
+  `${IDENTITY} ${TRIGGER_SUBJECT}, KPMG consultant presenting abstract data visualizations on large screen to colleagues around glass conference table, gesturing with confidence, wide medium shot showing room and team, scene focused on this user-described learning or challenge at KPMG: "${worst}", ${STYLE_SUFFIX}`;
 
-export const P3_PROMPT_TEMPLATE = (_worst: string, _best: string) =>
-  `${IDENTITY} ${TRIGGER_SUBJECT}, KPMG consultant collaborating with colleagues at standing meeting, tablet with geometric dashboard shapes, glass walls and city view, wide medium shot, ${STYLE_SUFFIX}`;
+export const P3_PROMPT_TEMPLATE = (worst: string, best: string) =>
+  `${IDENTITY} ${TRIGGER_SUBJECT}, KPMG consultant collaborating with colleagues at standing meeting, tablet with geometric dashboard shapes, glass walls and city view, wide medium shot, visual bridge between the user's KPMG challenge "${worst}" and special memory "${best}", ${STYLE_SUFFIX}`;
 
-export const P4_PROMPT_TEMPLATE = (_best: string) =>
-  `${IDENTITY} ${TRIGGER_SUBJECT}, KPMG consultant celebrating professional achievement in front of glass windows with sunset skyline, satisfied confident expression, warm rim lighting, wide medium shot, ${STYLE_SUFFIX}`;
+export const P4_PROMPT_TEMPLATE = (best: string) =>
+  `${IDENTITY} ${TRIGGER_SUBJECT}, KPMG consultant celebrating professional achievement in front of glass windows with sunset skyline, satisfied confident expression, warm rim lighting, wide medium shot, scene inspired by this user-described special KPMG memory: "${best}", ${STYLE_SUFFIX}`;
 
 export const BACK_COVER_PROMPT_TEMPLATE = () =>
   `${IDENTITY} ${TRIGGER_SUBJECT}, consultant standing tall facing viewer in heroic pose, golden hour city skyline and corporate towers behind, warm rim light, cinematic epic composition, ${STYLE_SUFFIX}`;

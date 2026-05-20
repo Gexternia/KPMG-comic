@@ -29,7 +29,6 @@ export interface PanelDimensions {
 export interface PanelInput {
   key: PanelKey;
   prompt: string;
-  negativePrompt: string;
   dimensions: PanelDimensions;
 }
 
@@ -96,14 +95,12 @@ async function resolveModelId(model: string): Promise<string> {
 function buildModelInput(
   model: string,
   prompt: string,
-  negativePrompt: string,
   photoDataUri: string,
   dimensions: PanelDimensions
 ): Record<string, unknown> {
   if (isPhotoMakerModel(model)) {
     return {
       prompt,
-      negative_prompt: negativePrompt,
       input_image: photoDataUri,
       style_name: "(No style)",
       style_strength_ratio: PHOTOMAKER_STYLE_STRENGTH,
@@ -267,7 +264,6 @@ export async function generatePanel(
   const modelInput = buildModelInput(
     primaryModel,
     input.prompt,
-    input.negativePrompt,
     photoDataUri,
     input.dimensions
   );
@@ -294,7 +290,6 @@ export async function generatePanel(
       const fallbackInput = buildModelInput(
         FALLBACK_MODEL,
         input.prompt,
-        input.negativePrompt,
         photoDataUri,
         input.dimensions
       );

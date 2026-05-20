@@ -3,7 +3,7 @@ import { StepCamera } from './components/StepCamera';
 import { StepForm } from './components/StepForm';
 import { ComicPrintView } from './components/ComicPrintView';
 import { AppStep, UserData, ComicPages } from './types';
-import { generateComicBook } from './services/geminiService';
+import { generateComicBook } from './services/comicService';
 import { Button } from './components/Button';
 import { Loader2, Zap } from 'lucide-react';
 

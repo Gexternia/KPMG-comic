@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
+import OpenAI from "openai";
 import {
   TEXT_MODEL_NAME,
   STORY_PROMPT,
@@ -8,7 +8,6 @@ import {
   P2_PROMPT_TEMPLATE,
   P3_PROMPT_TEMPLATE,
   P4_PROMPT_TEMPLATE,
-  GLOBAL_NEGATIVE_PROMPT,
   COVER_DIMENSIONS,
   PANEL_DIMENSIONS,
   BACK_COVER_DIMENSIONS,
@@ -17,7 +16,7 @@ import { HttpError } from "./errors";
 import { envNumber, envString } from "./env";
 import { generateAllPanels, type PanelInput } from "./providers/replicateImages";
 
-const GEMINI_REQUEST_TIMEOUT_MS = envNumber("AI_REQUEST_TIMEOUT_MS", 60_000);
+const TEXT_REQUEST_TIMEOUT_MS = envNumber("AI_REQUEST_TIMEOUT_MS", 60_000);
 const MAX_CONCURRENT_COMIC_GENERATIONS = envNumber("MAX_CONCURRENT_COMIC_GENERATIONS", 2);
 const CONCURRENCY_WAIT_TIMEOUT_MS = envNumber("CONCURRENCY_WAIT_TIMEOUT_MS", 8_000);
 const MAX_PENDING_COMIC_REQUESTS = envNumber("MAX_PENDING_COMIC_REQUESTS", 20);
@@ -89,16 +88,17 @@ function releaseGenerationSlot(): void {
   if (next) next();
 }
 
-function getGeminiApiKey(): string {
-  const key =
-    envString("GEMINI_API_KEY_1") ||
-    envString("GEMINI_API_KEY") ||
-    envString("VITE_API_KEY");
+function getOpenAIApiKey(): string {
+  const key = envString("OPENAI_API_KEY");
 
   if (!key) {
-    throw new HttpError(503, "Configuración incompleta: falta GEMINI_API_KEY_1 o GEMINI_API_KEY.", "config_missing_api_key");
+    throw new HttpError(503, "Configuración incompleta: falta OPENAI_API_KEY.", "config_missing_openai_api_key");
   }
   return key;
+}
+
+function getTextModelName(): string {
+  return envString("OPENAI_TEXT_MODEL") ?? TEXT_MODEL_NAME;
 }
 
 function validateReplicateConfig(): void {
@@ -147,24 +147,31 @@ function sanitizeCaptions(raw: unknown): StoryCaptions {
   };
 }
 
-async function generateStory(ai: GoogleGenAI, payload: ComicRequest): Promise<StoryCaptions> {
+async function generateStory(ai: OpenAI, payload: ComicRequest): Promise<StoryCaptions> {
   try {
     const response = await withTimeout(
-      ai.models.generateContent({
-        model: TEXT_MODEL_NAME,
-        contents: STORY_PROMPT({
-          userName: payload.userName,
-          worst: payload.worstMoment,
-          best: payload.bestMoment,
-        }),
-        config: { responseMimeType: "application/json" },
+      ai.chat.completions.create({
+        model: getTextModelName(),
+        messages: [
+          {
+            role: "user",
+            content: STORY_PROMPT({
+              userName: payload.userName,
+              worst: payload.worstMoment,
+              best: payload.bestMoment,
+            }),
+          },
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.7,
       }),
-      GEMINI_REQUEST_TIMEOUT_MS,
+      TEXT_REQUEST_TIMEOUT_MS,
       new HttpError(504, "Timeout al generar narrativa con IA.", "provider_timeout_story")
     );
 
-    if (!response.text) return sanitizeCaptions(null);
-    return sanitizeCaptions(JSON.parse(response.text));
+    const content = response.choices[0]?.message?.content;
+    if (!content) return sanitizeCaptions(null);
+    return sanitizeCaptions(JSON.parse(content));
   } catch {
     return sanitizeCaptions(null);
   }
@@ -175,37 +182,31 @@ function buildPanelInputs(payload: ComicRequest): PanelInput[] {
     {
       key: "cover",
       prompt: COVER_PROMPT_TEMPLATE(payload.userName),
-      negativePrompt: GLOBAL_NEGATIVE_PROMPT,
       dimensions: COVER_DIMENSIONS,
     },
     {
       key: "p1",
       prompt: P1_PROMPT_TEMPLATE(payload.worstMoment, payload.bestMoment),
-      negativePrompt: GLOBAL_NEGATIVE_PROMPT,
       dimensions: PANEL_DIMENSIONS,
     },
     {
       key: "p2",
       prompt: P2_PROMPT_TEMPLATE(payload.worstMoment),
-      negativePrompt: GLOBAL_NEGATIVE_PROMPT,
       dimensions: PANEL_DIMENSIONS,
     },
     {
       key: "p3",
       prompt: P3_PROMPT_TEMPLATE(payload.worstMoment, payload.bestMoment),
-      negativePrompt: GLOBAL_NEGATIVE_PROMPT,
       dimensions: PANEL_DIMENSIONS,
     },
     {
       key: "p4",
       prompt: P4_PROMPT_TEMPLATE(payload.bestMoment),
-      negativePrompt: GLOBAL_NEGATIVE_PROMPT,
       dimensions: PANEL_DIMENSIONS,
     },
     {
       key: "backCover",
       prompt: BACK_COVER_PROMPT_TEMPLATE(),
-      negativePrompt: GLOBAL_NEGATIVE_PROMPT,
       dimensions: BACK_COVER_DIMENSIONS,
     },
   ];
@@ -217,7 +218,7 @@ export async function generateComicFromPayload(rawPayload: unknown): Promise<Com
     const payload = validateRequest(rawPayload);
 
     validateReplicateConfig();
-    const ai = new GoogleGenAI({ apiKey: getGeminiApiKey() });
+    const ai = new OpenAI({ apiKey: getOpenAIApiKey() });
 
     const photoDataUri = ensurePhotoIsDataUri(payload.photo);
     const panels = buildPanelInputs(payload);
