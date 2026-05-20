@@ -1,5 +1,48 @@
 import { UserData, ComicPages } from '../types';
 
+interface ComicApiErrorBody {
+  message?: unknown;
+  requestId?: unknown;
+  code?: unknown;
+}
+
+export class ComicGenerationError extends Error {
+  status?: number;
+  code?: string;
+  requestId?: string;
+
+  constructor(message: string, options: { status?: number; code?: string; requestId?: string } = {}) {
+    super(message);
+    this.name = 'ComicGenerationError';
+    this.status = options.status;
+    this.code = options.code;
+    this.requestId = options.requestId;
+  }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object';
+}
+
+function getStringField(source: ComicApiErrorBody | null, key: keyof ComicApiErrorBody): string | undefined {
+  const value = source?.[key];
+  return typeof value === 'string' && value.trim() ? value : undefined;
+}
+
+function isComicPages(value: unknown): value is ComicPages {
+  if (!isRecord(value)) return false;
+
+  const captions = value.captions;
+  return (
+    ['cover', 'p1', 'p2', 'p3', 'p4', 'backCover'].every((key) => {
+      const image = value[key];
+      return typeof image === 'string' || image === null;
+    }) &&
+    isRecord(captions) &&
+    ['p1', 'p2', 'p3', 'p4'].every((key) => typeof captions[key] === 'string')
+  );
+}
+
 /**
  * Detects and crops letterbox/white borders baked into an AI-generated image.
  * Scans edge pixels; if significant white borders found, crops them out.
@@ -75,7 +118,7 @@ async function cropWhiteBorders(dataUrl: string | null): Promise<string | null> 
  * Generate comic book (Images + Text)
  */
 export async function generateComicBook(userData: UserData): Promise<ComicPages> {
-  if (!userData.photo) throw new Error("Falta la foto del usuario");
+  if (!userData.photo) throw new ComicGenerationError("Falta la foto del usuario");
 
   const response = await fetch('/api/comic-generate', {
     method: 'POST',
@@ -87,13 +130,24 @@ export async function generateComicBook(userData: UserData): Promise<ComicPages>
 
   const body = await response.json().catch(() => null);
   if (!response.ok) {
-    const message = body && typeof body.message === 'string'
-      ? body.message
-      : 'Error desconocido al generar cómic.';
-    throw new Error(message);
+    const errorBody = isRecord(body) ? body : null;
+    const message = getStringField(errorBody, 'message')
+      || `Error del servidor (${response.status}). Intenta nuevamente.`;
+    throw new ComicGenerationError(message, {
+      status: response.status,
+      code: getStringField(errorBody, 'code'),
+      requestId: getStringField(errorBody, 'requestId'),
+    });
   }
 
-  const comic = body as ComicPages;
+  if (!isComicPages(body)) {
+    throw new ComicGenerationError(
+      'El servidor devolvió una respuesta inválida. Intenta nuevamente.',
+      { status: response.status }
+    );
+  }
+
+  const comic = body;
 
   const [cover, p1, p2, p3, p4, backCover] = await Promise.all([
     cropWhiteBorders(comic.cover),
