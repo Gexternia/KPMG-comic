@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
+import Swal from 'sweetalert2';
+import 'sweetalert2/dist/sweetalert2.min.css';
 import { StepCamera } from './components/StepCamera';
 import { StepForm } from './components/StepForm';
 import { ComicPrintView } from './components/ComicPrintView';
 import { AppStep, UserData, ComicPages } from './types';
-import { generateComicBook } from './services/geminiService';
+import { ComicGenerationError, generateComicBook } from './services/geminiService';
 import { Button } from './components/Button';
 import { Loader2, Zap } from 'lucide-react';
 
@@ -13,6 +15,49 @@ const INITIAL_DATA: UserData = {
   worstMoment: '',
   bestMoment: ''
 };
+
+function getGenerateErrorAlertDetails(error: unknown): { message: string; requestId?: string } {
+  const fallbackMessage = 'Por favor, intenta de nuevo en unos segundos.';
+
+  if (error instanceof ComicGenerationError) {
+    return {
+      message: error.message || fallbackMessage,
+      requestId: error.requestId,
+    };
+  }
+
+  if (error instanceof TypeError) {
+    return {
+      message: 'No se pudo conectar con el servidor. Verifica tu conexión y vuelve a intentar.',
+    };
+  }
+
+  if (error instanceof Error && error.message) {
+    return { message: error.message };
+  }
+
+  return { message: fallbackMessage };
+}
+
+async function showGenerateErrorAlert(error: unknown): Promise<void> {
+  const { message, requestId } = getGenerateErrorAlertDetails(error);
+  const text = requestId ? `${message}\n\nID de solicitud: ${requestId}` : message;
+
+  await Swal.fire({
+    title: '¡Ups! No pudimos generar el cómic',
+    text,
+    icon: 'warning',
+    confirmButtonText: 'Intentar de nuevo',
+    buttonsStyling: false,
+    customClass: {
+      popup: 'kpmg-comic-alert',
+      title: 'kpmg-comic-alert-title',
+      htmlContainer: 'kpmg-comic-alert-text',
+      confirmButton: 'kpmg-comic-alert-button',
+      icon: 'kpmg-comic-alert-icon',
+    },
+  });
+}
 
 function App() {
   const [step, setStep] = useState<AppStep>(AppStep.WELCOME);
@@ -33,7 +78,6 @@ function App() {
     // Dynamic Loading Texts (Spanish)
     const msgs = [
       "Diseñando la portada...", 
-      "Creando al villano...", 
       "Añadiendo sombras dramáticas...", 
       "Coloreando la victoria...", 
       "Imprimiendo los diálogos...",
@@ -51,7 +95,8 @@ function App() {
       setStep(AppStep.PREVIEW);
     } catch (error) {
       console.error(error);
-      alert("Error al generar el cómic. Por favor intenta de nuevo. " + (error instanceof Error ? error.message : ""));
+      clearInterval(interval);
+      await showGenerateErrorAlert(error);
       setStep(AppStep.FORM);
     } finally {
       clearInterval(interval);
