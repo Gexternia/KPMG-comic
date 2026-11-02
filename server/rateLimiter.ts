@@ -1,4 +1,5 @@
 import type { IncomingMessage } from "node:http";
+import { envNumber } from "./env";
 
 interface RateLimitState {
   resetAtMs: number;
@@ -13,11 +14,13 @@ export interface RateLimitResult {
   resetAtMs: number;
 }
 
-const RATE_LIMIT_WINDOW_MS = Number(process.env.RATE_LIMIT_WINDOW_MS || 60_000);
-const RATE_LIMIT_MAX_REQUESTS = Number(process.env.RATE_LIMIT_MAX_REQUESTS || 5);
+// En un evento todos los asistentes suelen salir por la misma IP (Wi-Fi compartida),
+// así que este límite frena abusos; el gasto total lo controla MAX_IMAGE_CALLS_PER_HOUR.
+const RATE_LIMIT_WINDOW_MS = envNumber("RATE_LIMIT_WINDOW_MS", 60_000);
+const RATE_LIMIT_MAX_REQUESTS = envNumber("RATE_LIMIT_MAX_REQUESTS", 30);
 const store = new Map<string, RateLimitState>();
 
-function getClientIp(req: IncomingMessage): string {
+export function getClientIp(req: IncomingMessage): string {
   const forwarded = req.headers["x-forwarded-for"];
   if (typeof forwarded === "string" && forwarded.trim()) {
     return forwarded.split(",")[0]?.trim() || "unknown";

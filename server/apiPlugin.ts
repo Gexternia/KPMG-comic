@@ -1,15 +1,16 @@
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID, timingSafeEqual } from "node:crypto";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { Connect } from "vite";
 import { generateComicFromPayload } from "./comicService";
 import { logError, logInfo } from "./logger";
 import { buildHealthJson, buildPrometheusMetrics, recordHttpMetric } from "./metrics";
-import { isHttpError } from "./errors";
-import { checkRateLimit, getRateLimitConfig } from "./rateLimiter";
+import { HttpError, isHttpError } from "./errors";
+import { checkRateLimit, getClientIp, getRateLimitConfig } from "./rateLimiter";
 
 const COMIC_ENDPOINT = "/api/comic-generate";
 const METRICS_ENDPOINT = "/api/metrics";
 const HEALTH_ENDPOINT = "/api/health";
+const MAX_BODY_BYTES = 10 * 1024 * 1024;
 
 interface RequestContext {
   requestId: string;
@@ -36,24 +37,38 @@ function sendText(res: ServerResponse, statusCode: number, body: string, content
 
 function readRequestBody(req: IncomingMessage): Promise<string> {
   return new Promise((resolve, reject) => {
-    let body = "";
-    req.on("data", (chunk) => {
-      body += chunk.toString();
-      if (body.length > 30 * 1024 * 1024) {
-        reject(new Error("El payload excede el máximo permitido."));
+    const chunks: Buffer[] = [];
+    let size = 0;
+    const onData = (chunk: Buffer) => {
+      size += chunk.length;
+      if (size > MAX_BODY_BYTES) {
+        // Se sigue drenando sin guardar para poder responder 413 sin cortar la conexión.
+        req.off("data", onData);
+        req.resume();
+        reject(new HttpError(413, "El payload excede el máximo permitido.", "payload_too_large"));
+        return;
       }
-    });
-    req.on("end", () => resolve(body));
+      chunks.push(chunk);
+    };
+    req.on("data", onData);
+    req.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")));
     req.on("error", reject);
   });
 }
 
-function getClientIp(req: IncomingMessage): string {
-  const forwarded = req.headers["x-forwarded-for"];
-  if (typeof forwarded === "string" && forwarded.trim()) {
-    return forwarded.split(",")[0]?.trim() || "unknown";
+function parseJsonBody(rawBody: string): unknown {
+  try {
+    return rawBody ? JSON.parse(rawBody) : {};
+  } catch {
+    throw new HttpError(400, "El cuerpo de la solicitud no es JSON válido.", "invalid_json");
   }
-  return req.socket.remoteAddress || "unknown";
+}
+
+function isMetricsAuthorized(req: IncomingMessage): boolean {
+  const token = process.env.METRICS_TOKEN;
+  if (!token) return false;
+  const digest = (value: string) => createHash("sha256").update(value).digest();
+  return timingSafeEqual(digest(req.headers.authorization || ""), digest(`Bearer ${token}`));
 }
 
 const requestIdMiddleware: ApiMiddleware = (req, res, context) => {
@@ -108,6 +123,7 @@ const rateLimitMiddleware: ApiMiddleware = (req, res, context) => {
     sendJson(res, 429, {
       message: "Demasiadas solicitudes. Intenta de nuevo en unos segundos.",
       requestId: context.requestId,
+      code: "rate_limited",
     });
     void logInfo("comic.request.rate_limited", context.requestId, {
       ip,
@@ -140,7 +156,7 @@ async function handleComicGenerate(req: IncomingMessage, res: ServerResponse): P
     }
 
     const rawBody = await readRequestBody(req);
-    const payload = rawBody ? JSON.parse(rawBody) : {};
+    const payload = parseJsonBody(rawBody);
 
     await logInfo("comic.generate.started", context.requestId, {
       hasPhoto: Boolean((payload as Record<string, unknown>)?.photo),
@@ -149,7 +165,15 @@ async function handleComicGenerate(req: IncomingMessage, res: ServerResponse): P
         : 0,
     });
 
-    const result = await generateComicFromPayload(payload);
+    const clientGone = new AbortController();
+    res.on("close", () => {
+      if (!res.writableFinished) clientGone.abort();
+    });
+
+    const result = await generateComicFromPayload(payload, {
+      requestId: context.requestId,
+      clientSignal: clientGone.signal,
+    });
     const durationMs = Date.now() - context.startMs;
 
     await logInfo("comic.generate.succeeded", context.requestId, { panels: 6 }, durationMs);
@@ -183,6 +207,10 @@ async function handleComicGenerate(req: IncomingMessage, res: ServerResponse): P
 
 function handleMetrics(req: IncomingMessage, res: ServerResponse): void {
   const startMs = Date.now();
+  if (!isMetricsAuthorized(req)) {
+    sendJson(res, 404, { message: "No encontrado." });
+    return;
+  }
   const body = buildPrometheusMetrics();
   sendText(res, 200, body, "text/plain; version=0.0.4; charset=utf-8");
   recordHttpMetric(req.method || "GET", req.url || METRICS_ENDPOINT, 200, Date.now() - startMs);

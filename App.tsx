@@ -81,7 +81,8 @@ function App() {
       "Añadiendo sombras dramáticas...", 
       "Coloreando la victoria...", 
       "Imprimiendo los diálogos...",
-      "Casi listo..."
+      "Si hay mucha demanda puede tardar unos minutos...",
+      "Seguimos dibujando..."
     ];
     let msgIdx = 0;
     const interval = setInterval(() => {
@@ -125,7 +126,7 @@ function App() {
               <Button
                 variant="cta"
                 onClick={() => setStep(AppStep.CAMERA)}
-                className="w-full md:w-auto text-lg md:text-2xl px-6 md:px-12 py-4 md:py-6 flex justify-center items-center"
+                className="w-full md:w-auto md:text-2xl md:px-12 md:py-6 justify-center items-center"
               >
                 COMENZAR{' '}
                 <Zap className="ml-2 w-6 h-6 md:w-8 md:h-8 fill-yellow-400 text-yellow-400 flex-shrink-0" />

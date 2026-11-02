@@ -26,3 +26,4 @@ dist-ssr
 # Environment variables (avoid committing secrets)
 .env
 .env.*
+!.env.example
