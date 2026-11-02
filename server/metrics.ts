@@ -11,7 +11,8 @@ interface RouteMetrics {
 
 const MAX_SAMPLES_PER_ROUTE = 2000;
 const routeStore = new Map<string, RouteMetrics>();
-const startedAt = Date.now();
+const aiCallCounts = new Map<string, number>();
+let panelCacheHits = 0;
 
 function getRouteKey(method: string, path: string): string {
   return `${method.toUpperCase()} ${path}`;
@@ -54,11 +55,18 @@ export function recordHttpMetric(
   }
 }
 
+export function recordAiCall(kind: "image" | "text", keyIndex: number, outcome: string): void {
+  const key = `kind="${kind}",key="${keyIndex}",outcome="${outcome}"`;
+  aiCallCounts.set(key, (aiCallCounts.get(key) || 0) + 1);
+}
+
+export function recordPanelCacheHit(): void {
+  panelCacheHits += 1;
+}
+
 export function buildHealthJson(): Record<string, unknown> {
   return {
     status: "ok",
-    uptimeSeconds: Math.floor((Date.now() - startedAt) / 1000),
-    endpointsTracked: routeStore.size,
     timestamp: new Date().toISOString(),
   };
 }
@@ -91,6 +99,16 @@ export function buildPrometheusMetrics(): string {
       );
     }
   }
+
+  lines.push("# HELP app_ai_calls_total Llamadas a Gemini por tipo, clave y resultado.");
+  lines.push("# TYPE app_ai_calls_total counter");
+  for (const [labels, count] of aiCallCounts.entries()) {
+    lines.push(`app_ai_calls_total{${labels}} ${count}`);
+  }
+
+  lines.push("# HELP app_panel_cache_hits_total Viñetas reutilizadas sin volver a pagarlas.");
+  lines.push("# TYPE app_panel_cache_hits_total counter");
+  lines.push(`app_panel_cache_hits_total ${panelCacheHits}`);
 
   return `${lines.join("\n")}\n`;
 }

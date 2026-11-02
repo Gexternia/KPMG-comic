@@ -1,5 +1,15 @@
 import { UserData, ComicPages } from '../types';
 
+// Algo más que COMIC_DEADLINE_MS del servidor, para que normalmente responda él con el motivo real.
+const COMIC_REQUEST_TIMEOUT_MS = 285_000;
+
+// Solo se recorta lo que es claramente un marco: una banda clara u oscura casi sin variación.
+// Medido con viñetas reales de Gemini: sus marcos varían 4 como máximo; el dibujo, 9 o más.
+const BORDER_LIGHT_MIN = 180;
+const BORDER_DARK_MAX = 40;
+const BORDER_MAX_DEVIATION = 6;
+const MAX_BORDER_RATIO = 0.2;
+
 interface ComicApiErrorBody {
   message?: unknown;
   requestId?: unknown;
@@ -45,7 +55,8 @@ function isComicPages(value: unknown): value is ComicPages {
 
 /**
  * Detects and crops letterbox/white borders baked into an AI-generated image.
- * Scans edge pixels; if significant white borders found, crops them out.
+ * Scans edge pixels; uniform light or dark bands are cropped out. Wider bands are
+ * treated as artwork (a white sky, a dark floor) so the character stays centered.
  * Returns a clean data URL (original untouched if no borders detected).
  */
 async function cropWhiteBorders(dataUrl: string | null): Promise<string | null> {
@@ -63,28 +74,40 @@ async function cropWhiteBorders(dataUrl: string | null): Promise<string | null> 
       const { width, height } = canvas;
       const imageData = ctx.getImageData(0, 0, width, height).data;
 
-      const isBg = (x: number, y: number): boolean => {
-        const idx = (y * width + x) * 4;
-        const r = imageData[idx], g = imageData[idx + 1], b = imageData[idx + 2];
-        return (r > 200 && g > 200 && b > 200) || (r < 50 && g < 50 && b < 50);
+      const lineIsBorder = (length: number, pixelAt: (i: number) => number): boolean => {
+        let r = 0, g = 0, b = 0;
+        for (let i = 0; i < length; i++) {
+          const idx = pixelAt(i) * 4;
+          r += imageData[idx]; g += imageData[idx + 1]; b += imageData[idx + 2];
+        }
+        r /= length; g /= length; b /= length;
+
+        const isLight = r > BORDER_LIGHT_MIN && g > BORDER_LIGHT_MIN && b > BORDER_LIGHT_MIN;
+        const isDark = r < BORDER_DARK_MAX && g < BORDER_DARK_MAX && b < BORDER_DARK_MAX;
+        if (!isLight && !isDark) return false;
+
+        let deviation = 0;
+        for (let i = 0; i < length; i++) {
+          const idx = pixelAt(i) * 4;
+          deviation += Math.abs(imageData[idx] - r) + Math.abs(imageData[idx + 1] - g) + Math.abs(imageData[idx + 2] - b);
+        }
+        return deviation / (length * 3) <= BORDER_MAX_DEVIATION;
       };
 
-      const rowIsBorder = (y: number): boolean => {
-        let count = 0;
-        for (let x = 0; x < width; x++) if (isBg(x, y)) count++;
-        return count > width * 0.85;
+      const rowIsBorder = (y: number): boolean => lineIsBorder(width, (x) => y * width + x);
+      const colIsBorder = (x: number): boolean => lineIsBorder(height, (y) => y * width + x);
+
+      const measureBand = (size: number, isBorder: (offset: number) => boolean): number => {
+        const limit = Math.floor(size * MAX_BORDER_RATIO);
+        let band = 0;
+        while (band < limit && isBorder(band)) band++;
+        return band >= limit ? 0 : band;
       };
 
-      const colIsBorder = (x: number): boolean => {
-        let count = 0;
-        for (let y = 0; y < height; y++) if (isBg(x, y)) count++;
-        return count > height * 0.85;
-      };
-
-      let top = 0; while (top < height && rowIsBorder(top)) top++;
-      let bottom = 0; while (bottom < height && rowIsBorder(height - 1 - bottom)) bottom++;
-      let left = 0; while (left < width && colIsBorder(left)) left++;
-      let right = 0; while (right < width && colIsBorder(width - 1 - right)) right++;
+      const top = measureBand(height, rowIsBorder);
+      const bottom = measureBand(height, (offset) => rowIsBorder(height - 1 - offset));
+      const left = measureBand(width, colIsBorder);
+      const right = measureBand(width, (offset) => colIsBorder(width - 1 - offset));
 
       const threshold = Math.min(width, height) * 0.01;
       if (top < threshold && bottom < threshold && left < threshold && right < threshold) {
@@ -120,15 +143,36 @@ async function cropWhiteBorders(dataUrl: string | null): Promise<string | null> 
 export async function generateComicBook(userData: UserData): Promise<ComicPages> {
   if (!userData.photo) throw new ComicGenerationError("Falta la foto del usuario");
 
-  const response = await fetch('/api/comic-generate', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(userData)
-  });
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), COMIC_REQUEST_TIMEOUT_MS);
 
-  const body = await response.json().catch(() => null);
+  let response: Response;
+  let body: unknown;
+  try {
+    response = await fetch('/api/comic-generate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(userData),
+      signal: controller.signal
+    });
+    body = await response.json().catch(() => {
+      if (controller.signal.aborted) throw new DOMException('Aborted', 'AbortError');
+      return null;
+    });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      throw new ComicGenerationError(
+        'La generación está tardando demasiado. Intenta de nuevo: lo ya dibujado no se pierde.',
+        { code: 'client_timeout' }
+      );
+    }
+    throw error;
+  } finally {
+    clearTimeout(timer);
+  }
+
   if (!response.ok) {
     const errorBody = isRecord(body) ? body : null;
     const message = getStringField(errorBody, 'message')

@@ -1,5 +1,6 @@
 import { mkdir, appendFile, stat, rename } from "node:fs/promises";
 import path from "node:path";
+import "./env";
 
 type LogLevel = "debug" | "info" | "warn" | "error";
 

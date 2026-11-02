@@ -1,4 +1,4 @@
-/* 
+/*
    Nota: Debes agregar esto en index.css:
    @font-face {
      font-family: 'KPMGBold';
@@ -13,7 +13,7 @@ import { Printer, RefreshCcw } from 'lucide-react';
 import { Button } from './Button';
 
 /** Páginas 5 y 6 del fanzine (no generadas por IA): gráficas de marca / evento */
-const FANZINE_PAGE_5_SRC = '/fanzine/Imagen pagina 6.jpg';
+const FANZINE_PAGE_5_SRC = '/fanzine/page-make-history-together.jpg';
 const FANZINE_PAGE_6_SRC = '/fanzine/page-alumni-madrid.png';
 
 /** Fondo detrás de viñetas IA con object-contain: lee como “marco” de marca, no como papel roto */
@@ -27,7 +27,9 @@ interface ComicPrintViewProps {
 }
 
 export const ComicPrintView: React.FC<ComicPrintViewProps> = ({ comic, userName, onReset }) => {
-  const handlePrint = () => {
+  const handlePrint = async () => {
+    // Las imágenes de la hoja están ocultas en pantalla: se decodifican antes de abrir el diálogo.
+    await Promise.all(Array.from(document.images).map((image) => image.decode().catch(() => undefined)));
     window.print();
   };
 
@@ -46,16 +48,16 @@ export const ComicPrintView: React.FC<ComicPrintViewProps> = ({ comic, userName,
           </h1>
           <div className="w-full space-y-2">
             <div className="grid w-full grid-cols-2 gap-2">
-              <Button onClick={onReset} variant="danger" className="w-full text-xs py-2 px-3 shadow-none border-2">
+              <Button onClick={onReset} variant="danger" className="w-full !text-xs !py-2 !px-3 !shadow-none !border-2">
               <RefreshCcw className="mr-1 w-4 h-4" /> REINICIAR
               </Button>
-              <Button onClick={handlePrint} variant="primary" className="w-full text-xs py-2 px-3 shadow-none border-2">
+              <Button onClick={handlePrint} variant="primary" className="w-full !text-xs !py-2 !px-3 !shadow-none !border-2">
               <Printer className="mr-1 w-4 h-4" /> IMPRIMIR COMIC
               </Button>
             </div>
           </div>
           <p className="text-gray-400 text-xs text-center max-w-[250px]">
-            Abajo ves la versión digital. Dale a imprimir para obtener el formato plegable A4.
+            Para imprimir: A4 horizontal, márgenes ninguno y escala 100 %.
           </p>
         </div>
       </div>
@@ -140,20 +142,13 @@ export const ComicPrintView: React.FC<ComicPrintViewProps> = ({ comic, userName,
       {/* This uses the specific 8-panel zine layout (inverted top row) */}
       <div
         className="print-fanzine-layout hidden print:grid print:z-[100] print:box-border print:!bg-[#e8edf5]"
-        style={{
-          width: '297mm',
-          height: '210mm',
-          gridTemplateColumns: 'repeat(4, 1fr)',
-          gridTemplateRows: 'repeat(2, 1fr)',
-          pageBreakAfter: 'avoid'
-        }}
       >
         {/* 1. PORTADA — estira a la celda (fill) para quitar bandas arriba/abajo */}
         <div className={`min-h-0 min-w-0 border-r-2 border-b-2 border-black relative overflow-hidden ${PRINT_PANEL_BG} p-0 rotate-180`}>
           {comic.cover && (
             <img src={comic.cover} alt="Cover" className="print-ia-fill-height z-0" />
           )}
-          <div className="absolute bottom-12 left-0 right-0 z-10 flex flex-col items-center pointer-events-none px-4 drop-shadow-[2px_2px_0_#000]" style={{ letterSpacing: nameNeedsShrink ? '-1.5px' : '-1px' }}>
+          <div className="absolute bottom-12 left-0 right-0 z-10 flex flex-col items-center pointer-events-none px-6 drop-shadow-[2px_2px_0_#000]" style={{ letterSpacing: nameNeedsShrink ? '-1.5px' : '-1px' }}>
             <h2 className={`${nameTextClass} text-white uppercase leading-[1.1] text-center w-full`} style={{ fontFamily: "'KPMGBold', 'Arial Black', sans-serif", WebkitTextStroke: '1px rgba(0,0,0,0.4)' }}>{userName}</h2>
             <h2 className="text-[41px] text-white uppercase leading-none text-center mt-0.5" style={{ fontFamily: "'KPMGBold', 'Arial Black', sans-serif", WebkitTextStroke: '1px rgba(0,0,0,0.4)' }}>EN KPMG</h2>
           </div>
@@ -181,34 +176,33 @@ export const ComicPrintView: React.FC<ComicPrintViewProps> = ({ comic, userName,
         {/* 5–8. Viñetas IA + captions */}
         <div className={`min-h-0 min-w-0 border-r-2 border-t-2 border-black relative overflow-hidden ${PRINT_PANEL_BG} p-0`}>
            {comic.p1 && <img src={comic.p1} alt="Page 1" className="print-ia-fill-height z-0" />}
-           <div className="absolute top-1.5 left-5 right-1.5 z-10 bg-[#0091DA] border-2 border-black p-1.5 shadow-sm text-white">
+           <div className="absolute top-4 left-6 right-2 z-10 bg-[#0091DA] border-2 border-black p-1.5 shadow-sm text-white">
                 <p className="text-xs font-bold font-comic leading-tight">{comic.captions.p1}</p>
             </div>
         </div>
 
         <div className={`min-h-0 min-w-0 border-r-2 border-t-2 border-black relative overflow-hidden ${PRINT_PANEL_BG} p-0`}>
            {comic.p2 && <img src={comic.p2} alt="Page 2" className="print-ia-fill-height z-0" />}
-           <div className="absolute bottom-4 left-1.5 right-1.5 z-10 bg-[#00A3A1] border-2 border-black p-1.5 shadow-sm text-white">
+           <div className="absolute bottom-8 left-1.5 right-1.5 z-10 bg-[#00A3A1] border-2 border-black p-1.5 shadow-sm text-white">
                 <p className="text-xs font-bold font-comic leading-tight">{comic.captions.p2}</p>
             </div>
         </div>
 
         <div className={`min-h-0 min-w-0 border-r-2 border-t-2 border-black relative overflow-hidden ${PRINT_PANEL_BG} p-0`}>
            {comic.p3 && <img src={comic.p3} alt="Page 3" className="print-ia-fill-height z-0" />}
-           <div className="absolute bottom-4 left-1.5 right-1.5 z-10 bg-[#483698] border-2 border-black p-1.5 shadow-sm text-white">
+           <div className="absolute bottom-8 left-1.5 right-1.5 z-10 bg-[#483698] border-2 border-black p-1.5 shadow-sm text-white">
                 <p className="text-xs font-bold font-comic leading-tight">{comic.captions.p3}</p>
             </div>
         </div>
 
         <div className={`min-h-0 min-w-0 border-l-0 border-t-2 border-black relative overflow-hidden ${PRINT_PANEL_BG} p-0`}>
            {comic.p4 && <img src={comic.p4} alt="Page 4" className="print-ia-fill-height z-0" />}
-           <div className="absolute top-4 left-2 right-2 z-10 bg-[#6D2077] border-2 border-black p-1.5 shadow-sm text-white">
+           <div className="absolute top-4 left-2 right-6 z-10 bg-[#6D2077] border-2 border-black p-1.5 shadow-sm text-white">
                 <p className="text-xs font-bold font-comic leading-tight">{comic.captions.p4}</p>
             </div>
         </div>
 
          {/* Fold Guides */}
-         <div className="absolute inset-0 pointer-events-none border-2 border-dashed border-gray-400 opacity-50"></div>
          <div className="absolute top-1/2 left-0 w-full h-0 border-t-2 border-dashed border-gray-500"></div>
          <div className="absolute top-0 left-1/4 h-full w-0 border-l border-dashed border-gray-300"></div>
          <div className="absolute top-0 left-1/2 h-full w-0 border-l border-dashed border-gray-300"></div>

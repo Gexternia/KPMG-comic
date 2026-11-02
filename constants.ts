@@ -1,6 +1,12 @@
 export const MODEL_NAME = 'gemini-2.5-flash-image';
 export const TEXT_MODEL_NAME = 'gemini-2.5-flash';
 
+// Formato admitido por Gemini más cercano a la celda impresa del fanzine (74 × 105 mm)
+export const PANEL_ASPECT_RATIO = '3:4';
+
+export const MAX_USER_NAME_LENGTH = 60;
+export const MAX_STORY_TEXT_LENGTH = 400;
+
 // Prompt templates
 export const STYLE_PROMPT = `
 Style: American comic book style, modern, high contrast, bold black ink lines, halftone patterns.

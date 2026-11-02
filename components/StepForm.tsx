@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from './Button';
 import { UserData } from '../types';
+import { MAX_STORY_TEXT_LENGTH, MAX_USER_NAME_LENGTH } from '../constants';
 import { ArrowRight } from 'lucide-react';
 
 interface StepFormProps {
@@ -45,6 +46,7 @@ export const StepForm: React.FC<StepFormProps> = ({ initialData, onSubmit }) => 
             value={formData.userName}
             onChange={handleChange}
             placeholder="Ej. María García"
+            maxLength={MAX_USER_NAME_LENGTH}
             className="w-full text-xl md:text-2xl p-3 md:p-4 border-4 border-black focus:outline-none focus:ring-4 focus:ring-[#005EB8] bg-gray-50 font-bold text-neutral-900"
             required
           />
@@ -58,6 +60,7 @@ export const StepForm: React.FC<StepFormProps> = ({ initialData, onSubmit }) => 
             value={formData.bestMoment}
             onChange={handleChange}
             placeholder="Ej. El día que cerré mi primer proyecto"
+            maxLength={MAX_STORY_TEXT_LENGTH}
             className="w-full text-lg md:text-xl p-3 md:p-4 border-4 border-black focus:outline-none focus:ring-4 focus:ring-[#00A3A1] bg-gray-50 text-neutral-900"
             required
           />
@@ -71,6 +74,7 @@ export const StepForm: React.FC<StepFormProps> = ({ initialData, onSubmit }) => 
             value={formData.worstMoment}
             onChange={handleChange}
             placeholder="Ej. Aprender a priorizar bajo presión en un cierre trimestral"
+            maxLength={MAX_STORY_TEXT_LENGTH}
             className="w-full text-lg md:text-xl p-3 md:p-4 border-4 border-black focus:outline-none focus:ring-4 focus:ring-red-400 bg-gray-50 text-neutral-900"
             required
           />
