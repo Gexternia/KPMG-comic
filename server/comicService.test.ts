@@ -117,8 +117,8 @@ describe("gasto", () => {
     expect(error.statusCode).toBe(503);
     expect(error.code).toBe("provider_unavailable");
     expect(error.message).toContain("5 de 6");
-    // 5 correctas más los 3 intentos de la que falla
-    expect(imageCalls()).toHaveLength(8);
+    // 5 correctas + 3 intentos (ronda 0) + 3 intentos (ronda 1 de reintento) de la que falla
+    expect(imageCalls()).toHaveLength(11);
 
     fake.calls.length = 0;
     fake.imageHandler = async () => imageResponse();
@@ -127,6 +127,41 @@ describe("gasto", () => {
     expect(imageCalls()).toHaveLength(1);
     expect(promptOf(imageCalls()[0])).toBe(failedPrompt);
     expect(comic.backCover).toBeTruthy();
+  });
+
+  it("reintenta en una ronda extra las viñetas que fallaron por un motivo transitorio", async () => {
+    const { generateComicFromPayload } = await loadService();
+    let targetPrompt: string | null = null;
+    const attemptsByPrompt = new Map<string, number>();
+    fake.imageHandler = async (call) => {
+      const prompt = promptOf(call);
+      targetPrompt ??= prompt;
+      if (prompt === targetPrompt) {
+        const attempts = (attemptsByPrompt.get(prompt) ?? 0) + 1;
+        attemptsByPrompt.set(prompt, attempts);
+        // Falla toda la ronda 0 (3 intentos internos) y acierta en la ronda de reintento.
+        if (attempts <= 3) throw apiError(503);
+      }
+      return imageResponse();
+    };
+
+    const comic = await generateComicFromPayload(payload);
+    expect(comic.cover).toBeTruthy();
+    expect(comic.backCover).toBeTruthy();
+    // 5 correctas + 3 fallos (ronda 0) + 1 acierto (ronda 1) de la que fallaba
+    expect(imageCalls()).toHaveLength(9);
+  });
+
+  it("no reintenta en rondas extra un fallo no reintentable", async () => {
+    const { generateComicFromPayload } = await loadService();
+    fake.imageHandler = async () => {
+      throw apiError(400, "invalid request argument");
+    };
+
+    const error = await rejection(generateComicFromPayload(payload));
+    expect(error.code).toBe("provider_bad_request");
+    // 6 viñetas, un solo intento cada una: no hay reintento ni interno ni de ronda
+    expect(imageCalls()).toHaveLength(6);
   });
 
   it("repetir un cómic ya generado no vuelve a pagar imágenes", async () => {
@@ -165,7 +200,7 @@ describe("gasto", () => {
   });
 
   it("repite un timeout una sola vez y cancela la petición colgada", async () => {
-    const { generateComicFromPayload } = await loadService({ AI_REQUEST_TIMEOUT_MS: "5000", COMIC_DEADLINE_MS: "60000" });
+    const { generateComicFromPayload } = await loadService({ AI_REQUEST_TIMEOUT_MS: "5000", COMIC_DEADLINE_MS: "60000", MAX_COMIC_PANEL_ROUNDS: "1" });
     const signals: AbortSignal[] = [];
     let firstPrompt: string | null = null;
     vi.useFakeTimers({ shouldAdvanceTime: true, advanceTimeDelta: 500 });
@@ -334,6 +369,7 @@ describe("cola", () => {
     const { generateComicFromPayload } = await loadService({
       MAX_CONCURRENT_COMIC_GENERATIONS: "1",
       MAX_PANEL_ATTEMPTS: "1",
+      MAX_COMIC_PANEL_ROUNDS: "1",
     });
     const pending: Array<() => void> = [];
     let firstCall = true;

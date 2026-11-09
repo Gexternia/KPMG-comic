@@ -26,6 +26,9 @@ const AI_REQUEST_TIMEOUT_MS = envNumber("AI_REQUEST_TIMEOUT_MS", 90_000);
 const STORY_REQUEST_TIMEOUT_MS = envNumber("STORY_REQUEST_TIMEOUT_MS", 30_000);
 const COMIC_DEADLINE_MS = envNumber("COMIC_DEADLINE_MS", 270_000);
 const MAX_PANEL_ATTEMPTS = envNumber("MAX_PANEL_ATTEMPTS", 3);
+// Rondas de orquestación: tras generar todas las viñetas, si alguna falló por un motivo
+// transitorio se reintentan SOLO las que faltan en rondas extra (1 = sin reintento extra).
+const MAX_COMIC_PANEL_ROUNDS = envNumber("MAX_COMIC_PANEL_ROUNDS", 2);
 const AI_RETRY_BACKOFF_MS = envNumber("AI_RETRY_BACKOFF_MS", 1_000);
 const MAX_CONCURRENT_COMIC_GENERATIONS = envNumber("MAX_CONCURRENT_COMIC_GENERATIONS", 4);
 const CONCURRENCY_WAIT_TIMEOUT_MS = envNumber("CONCURRENCY_WAIT_TIMEOUT_MS", 90_000);
@@ -45,6 +48,18 @@ const KEY_DISABLED_COOLDOWN_MS = 10 * 60_000;
 const ONE_HOUR_MS = 60 * 60_000;
 
 const PANEL_NAMES = ["cover", "p1", "p2", "p3", "p4", "backCover"] as const;
+
+// Códigos que merecen una ronda extra de orquestación: fallos transitorios que, tras agotar
+// los reintentos internos de una viñeta, aún pueden resolverse al volver a intentarlo.
+// Se excluyen a propósito los definitivos (contenido bloqueado, petición inválida, modelo
+// inexistente) y los que dejan la clave en pausa larga (cuota agotada, auth), que no mejoran.
+const ROUND_RETRYABLE_CODES = new Set([
+  "provider_timeout",
+  "provider_unavailable",
+  "provider_rate_limited",
+  "provider_invalid_image_response",
+  "provider_image_blocked",
+]);
 
 let activeComicGenerations = 0;
 const pendingWaiters: Array<() => void> = [];
@@ -631,32 +646,66 @@ export async function generateComicFromPayload(
     ];
 
     const storyPromise = generateStory(payload, deadlineMs, requestId);
-    // allSettled mantiene el cupo ocupado hasta que terminan todas las viñetas
-    // y deja guardadas las que salieron bien aunque otra falle.
-    const panelResults = await Promise.allSettled(
-      panelPrompts.map((prompt, index) =>
-        generatePanel(payload.photo, prompt, PANEL_NAMES[index], index, deadlineMs, requestId)
-      )
-    );
-    const captions = await storyPromise;
 
-    const images: string[] = [];
-    const failures: unknown[] = [];
-    for (const result of panelResults) {
-      if (result.status === "fulfilled") images.push(result.value);
-      else failures.push(result.reason);
-    }
+    // Cada viñeta ya reintenta internamente (hasta MAX_PANEL_ATTEMPTS con failover de clave).
+    // Por encima, si una falla por un motivo transitorio (timeout, saturación del proveedor),
+    // se reintentan SOLO las que faltan en rondas extra mientras quede margen en el deadline.
+    // Las viñetas logradas quedan en caché, así que no se vuelven a pagar.
+    const images: (string | undefined)[] = new Array(panelPrompts.length);
+    let pendingIndices = panelPrompts.map((_, index) => index);
+    let lastRetryableError: HttpError | undefined;
 
-    if (failures.length > 0) {
-      const firstFailure = classifyProviderError(failures[0]).error;
+    const savedCount = (): number => images.reduce((count, image) => (image ? count + 1 : count), 0);
+    const buildComicError = (base: HttpError): HttpError => {
+      const saved = savedCount();
       const savedNote =
-        images.length > 0
-          ? ` Ya tenemos ${images.length} de ${panelPrompts.length} viñetas guardadas: al reintentar solo se dibujarán las que faltan.`
+        saved > 0
+          ? ` Ya tenemos ${saved} de ${panelPrompts.length} viñetas guardadas: al reintentar solo se dibujarán las que faltan.`
           : "";
-      throw new HttpError(firstFailure.statusCode, `${firstFailure.message}${savedNote}`, firstFailure.code);
+      return new HttpError(base.statusCode, `${base.message}${savedNote}`, base.code);
+    };
+
+    for (let round = 0; round < MAX_COMIC_PANEL_ROUNDS && pendingIndices.length > 0; round += 1) {
+      // No se arranca una ronda nueva si ya no queda margen razonable antes del deadline.
+      if (round > 0 && Date.now() + MIN_ATTEMPT_WINDOW_MS >= deadlineMs) break;
+      if (round > 0) {
+        void logWarn("comic.panels.retry_round", requestId, { round, pending: pendingIndices.length });
+      }
+
+      // allSettled mantiene el cupo ocupado hasta que terminan todas las viñetas de la ronda
+      // y deja guardadas las que salieron bien aunque otra falle.
+      const settled = await Promise.allSettled(
+        pendingIndices.map((index) =>
+          generatePanel(payload.photo, panelPrompts[index], PANEL_NAMES[index], index, deadlineMs, requestId)
+        )
+      );
+
+      const stillPending: number[] = [];
+      for (let i = 0; i < settled.length; i += 1) {
+        const index = pendingIndices[i];
+        const result = settled[i];
+        if (result.status === "fulfilled") {
+          images[index] = result.value;
+          continue;
+        }
+        const failure = classifyProviderError(result.reason);
+        // Un fallo definitivo (contenido bloqueado, petición inválida, cuota agotada) no
+        // mejora al repetir: falla ya. Solo se reintentan en otra ronda los transitorios.
+        if (!ROUND_RETRYABLE_CODES.has(failure.error.code ?? "")) throw buildComicError(failure.error);
+        lastRetryableError = failure.error;
+        stillPending.push(index);
+      }
+      pendingIndices = stillPending;
     }
 
-    const [cover, p1, p2, p3, p4, backCover] = images;
+    if (pendingIndices.length > 0) {
+      throw buildComicError(
+        lastRetryableError ?? new HttpError(504, "Timeout al generar el cómic.", "provider_timeout")
+      );
+    }
+
+    const captions = await storyPromise;
+    const [cover, p1, p2, p3, p4, backCover] = images as string[];
     return { cover, p1, p2, p3, p4, backCover, captions };
   } finally {
     releaseSlot();
