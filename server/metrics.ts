@@ -10,9 +10,28 @@ interface RouteMetrics {
 }
 
 const MAX_SAMPLES_PER_ROUTE = 2000;
+const MAX_COMIC_SAMPLES = 2000;
+const MAX_RECENT_COMIC_EVENTS = 50;
 const routeStore = new Map<string, RouteMetrics>();
 const aiCallCounts = new Map<string, number>();
+// Agregado estructurado (kind -> outcome -> count) para el panel de administración.
+const aiByKindOutcome = new Map<string, Map<string, number>>();
 let panelCacheHits = 0;
+
+interface ComicEvent {
+  ts: number;
+  outcome: "success" | "failure";
+  code?: string;
+  durationMs: number;
+  requestId?: string;
+}
+
+let comicStarted = 0;
+let comicSucceeded = 0;
+let comicFailed = 0;
+const comicFailuresByCode = new Map<string, number>();
+const comicDurations: number[] = [];
+const recentComicEvents: ComicEvent[] = [];
 
 function getRouteKey(method: string, path: string): string {
   return `${method.toUpperCase()} ${path}`;
@@ -58,10 +77,94 @@ export function recordHttpMetric(
 export function recordAiCall(kind: "image" | "text", keyIndex: number, outcome: string): void {
   const key = `kind="${kind}",key="${keyIndex}",outcome="${outcome}"`;
   aiCallCounts.set(key, (aiCallCounts.get(key) || 0) + 1);
+
+  const byOutcome = aiByKindOutcome.get(kind) ?? new Map<string, number>();
+  byOutcome.set(outcome, (byOutcome.get(outcome) || 0) + 1);
+  aiByKindOutcome.set(kind, byOutcome);
 }
 
 export function recordPanelCacheHit(): void {
   panelCacheHits += 1;
+}
+
+export function recordComicStarted(): void {
+  comicStarted += 1;
+}
+
+export function recordComicOutcome(
+  outcome: "success" | "failure",
+  durationMs: number,
+  requestId?: string,
+  code?: string
+): void {
+  if (outcome === "success") {
+    comicSucceeded += 1;
+  } else {
+    comicFailed += 1;
+    const key = code || "unknown";
+    comicFailuresByCode.set(key, (comicFailuresByCode.get(key) || 0) + 1);
+  }
+
+  comicDurations.push(durationMs);
+  if (comicDurations.length > MAX_COMIC_SAMPLES) {
+    comicDurations.splice(0, comicDurations.length - MAX_COMIC_SAMPLES);
+  }
+
+  recentComicEvents.unshift({ ts: Date.now(), outcome, code, durationMs, requestId });
+  if (recentComicEvents.length > MAX_RECENT_COMIC_EVENTS) {
+    recentComicEvents.length = MAX_RECENT_COMIC_EVENTS;
+  }
+}
+
+function average(values: number[]): number {
+  if (!values.length) return 0;
+  return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
+
+function buildAiSummary(): Record<string, { total: number; ok: number; failed: number; byOutcome: Record<string, number> }> {
+  const summary: Record<string, { total: number; ok: number; failed: number; byOutcome: Record<string, number> }> = {};
+  for (const [kind, byOutcome] of aiByKindOutcome.entries()) {
+    let total = 0;
+    let ok = 0;
+    const outcomes: Record<string, number> = {};
+    for (const [outcome, count] of byOutcome.entries()) {
+      total += count;
+      if (outcome === "ok") ok += count;
+      outcomes[outcome] = count;
+    }
+    summary[kind] = { total, ok, failed: total - ok, byOutcome: outcomes };
+  }
+  return summary;
+}
+
+/** Resumen de negocio pensado para el panel /admin (no para Prometheus). */
+export function buildAdminStats(): Record<string, unknown> {
+  const active = Math.max(0, comicStarted - comicSucceeded - comicFailed);
+  const finished = comicSucceeded + comicFailed;
+  const successRate = finished > 0 ? (comicSucceeded / finished) * 100 : 0;
+
+  return {
+    generatedAt: new Date().toISOString(),
+    comics: {
+      started: comicStarted,
+      succeeded: comicSucceeded,
+      failed: comicFailed,
+      active,
+      successRate: Number(successRate.toFixed(1)),
+      avgDurationMs: Math.round(average(comicDurations)),
+      p95DurationMs: Math.round(percentile(comicDurations, 95)),
+      failuresByCode: Object.fromEntries(comicFailuresByCode),
+    },
+    ai: buildAiSummary(),
+    cache: { panelHits: panelCacheHits },
+    recent: recentComicEvents.slice(0, 20).map((event) => ({
+      ts: new Date(event.ts).toISOString(),
+      outcome: event.outcome,
+      code: event.code ?? null,
+      durationMs: event.durationMs,
+      requestId: event.requestId ?? null,
+    })),
+  };
 }
 
 export function buildHealthJson(): Record<string, unknown> {
