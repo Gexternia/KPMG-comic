@@ -7,7 +7,7 @@
      font-style: normal;
    }
 */
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ComicPages } from '../types';
 import { Printer, RefreshCcw } from 'lucide-react';
 import { Button } from './Button';
@@ -26,7 +26,30 @@ interface ComicPrintViewProps {
   onReset: () => void;
 }
 
+/** Algunos navegadores dejan estilos de @media print tras cerrar el diálogo. */
+function recoverScreenStylesAfterPrint() {
+  document.body.classList.remove('printing');
+  // Forzar un repaint para que vuelvan .screen-only / .print-fanzine-layout
+  const root = document.documentElement;
+  root.style.display = 'none';
+  void root.offsetHeight;
+  root.style.display = '';
+}
+
 export const ComicPrintView: React.FC<ComicPrintViewProps> = ({ comic, userName, onReset }) => {
+  useEffect(() => {
+    const onBeforePrint = () => document.body.classList.add('printing');
+    const onAfterPrint = () => recoverScreenStylesAfterPrint();
+
+    window.addEventListener('beforeprint', onBeforePrint);
+    window.addEventListener('afterprint', onAfterPrint);
+    return () => {
+      window.removeEventListener('beforeprint', onBeforePrint);
+      window.removeEventListener('afterprint', onAfterPrint);
+      document.body.classList.remove('printing');
+    };
+  }, []);
+
   const handlePrint = async () => {
     // Las imágenes de la hoja están ocultas en pantalla: se intenta decodificarlas
     // antes de abrir el diálogo. Si alguna se cuelga, no bloqueamos la impresión.
@@ -48,6 +71,8 @@ export const ComicPrintView: React.FC<ComicPrintViewProps> = ({ comic, userName,
       )
     );
     window.print();
+    // Fallback por si afterprint no dispara (algunos WebViews/tablets)
+    window.setTimeout(recoverScreenStylesAfterPrint, 500);
   };
 
   const userNameWords = userName.trim().split(/\s+/);
@@ -58,7 +83,7 @@ export const ComicPrintView: React.FC<ComicPrintViewProps> = ({ comic, userName,
     <div className="h-screen w-full overflow-y-auto bg-gray-900 pb-20 print:!h-auto print:!min-h-0 print:!bg-white print:!p-0 print:!pb-0 print:!overflow-visible">
       
       {/* === HEADER / CONTROLS (Screen Only) === */}
-      <div className="print:hidden sticky top-0 z-50 bg-[#1E49E2]/95 backdrop-blur-sm border-b-4 border-black p-4 shadow-lg">
+      <div className="screen-only sticky top-0 z-50 bg-[#1E49E2]/95 backdrop-blur-sm border-b-4 border-black p-4 shadow-lg">
         <div className="max-w-md mx-auto flex flex-col items-center space-y-3">
           <h1 className="text-white text-3xl comic-title tracking-wide drop-shadow-md text-center leading-none">
             ¡TU CÓMIC ESTÁ LISTO!
@@ -80,7 +105,7 @@ export const ComicPrintView: React.FC<ComicPrintViewProps> = ({ comic, userName,
       </div>
 
       {/* === DIGITAL READER (Screen Only - Vertical Scroll) === */}
-      <div className="print:hidden w-full max-w-md mx-auto p-4 space-y-8 animate-fade-in">
+      <div className="screen-only w-full max-w-md mx-auto p-4 space-y-8 animate-fade-in">
         
         {/* Cover */}
         <div className="bg-white border-4 border-black p-2 shadow-[8px_8px_0px_0px_rgba(255,255,255,0.2)] text-[#00338D]">
@@ -158,7 +183,7 @@ export const ComicPrintView: React.FC<ComicPrintViewProps> = ({ comic, userName,
       {/* === PRINT LAYOUT (Hidden on Screen, Visible on Print) === */}
       {/* This uses the specific 8-panel zine layout (inverted top row) */}
       <div
-        className="print-fanzine-layout hidden print:grid print:z-[100] print:box-border print:!bg-[#e8edf5]"
+        className="print-fanzine-layout print:z-[100] print:box-border print:!bg-[#e8edf5]"
       >
         {/* 1. PORTADA — estira a la celda (fill) para quitar bandas arriba/abajo */}
         <div className={`min-h-0 min-w-0 border-r-2 border-b-2 border-black relative overflow-hidden ${PRINT_PANEL_BG} p-0 rotate-180`}>

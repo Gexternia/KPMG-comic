@@ -72,6 +72,14 @@
         object-fit: cover;
         object-position: center center;
       }
+      /* Pantalla vs impresión: !important evita que el diálogo de print deje estilos colgados */
+      .screen-only {
+        display: block !important;
+      }
+      .print-fanzine-layout {
+        display: none !important;
+      }
+
       /* Custom Print Styles */
       @media print {
         @page {
@@ -93,11 +101,16 @@
           min-height: 0 !important;
         }
 
+        .screen-only {
+          display: none !important;
+        }
+
         /*
           La hoja cubre todo el papel. Una impresora sin impresión a sangre pierde unos
           milímetros de borde, así que textos y nombres quedan a 6 mm o más del borde exterior.
         */
         .print-fanzine-layout {
+          display: grid !important;
           position: fixed !important;
           inset: 0;
           width: 100%;
