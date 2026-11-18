@@ -414,12 +414,14 @@ function validateRequest(payload: unknown): ComicRequest {
 
 function extractImageDataUrl(response: {
   candidates?: Array<{
-    content?: { parts?: Array<{ inlineData?: { mimeType?: string; data?: string } }> };
+    content?: { parts?: Array<{ thought?: boolean; inlineData?: { mimeType?: string; data?: string } }> };
   }>;
 }): string | null {
   for (const candidate of response.candidates ?? []) {
     const parts = candidate.content?.parts ?? [];
     for (const part of parts) {
+      // Los modelos con razonamiento pueden devolver bocetos intermedios marcados como thought.
+      if (part.thought) continue;
       const data = part.inlineData?.data;
       if (data) {
         const mime = part.inlineData?.mimeType?.startsWith("image/") ? part.inlineData.mimeType : "image/png";

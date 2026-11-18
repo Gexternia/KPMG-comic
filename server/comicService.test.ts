@@ -96,6 +96,31 @@ describe("generación correcta", () => {
     expect(byKey.filter((key) => key === "key-2")).toHaveLength(3);
   });
 
+  it("usa gemini-3.1-flash-image por defecto", async () => {
+    const { generateComicFromPayload } = await loadService();
+    await generateComicFromPayload(payload);
+    expect(imageCalls().every((call) => call.model === "gemini-3.1-flash-image")).toBe(true);
+  });
+
+  it("ignora los bocetos intermedios del razonamiento y devuelve la imagen final", async () => {
+    const { generateComicFromPayload } = await loadService();
+    fake.imageHandler = async () => ({
+      candidates: [
+        {
+          content: {
+            parts: [
+              { thought: true, inlineData: { mimeType: "image/png", data: "Qk9SUkFET1I=" } },
+              { inlineData: { mimeType: "image/png", data: "RklOQUw=" } },
+            ],
+          },
+        },
+      ],
+    });
+
+    const comic = await generateComicFromPayload(payload);
+    expect(comic.cover).toBe("data:image/png;base64,RklOQUw=");
+  });
+
   it("permite elegir el modelo por variable de entorno", async () => {
     const { generateComicFromPayload } = await loadService({ GEMINI_IMAGE_MODEL: "otro-modelo" });
     await generateComicFromPayload(payload);

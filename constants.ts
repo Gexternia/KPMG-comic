@@ -1,4 +1,4 @@
-export const MODEL_NAME = 'gemini-2.5-flash-image';
+export const MODEL_NAME = 'gemini-3.1-flash-image';
 export const TEXT_MODEL_NAME = 'gemini-2.5-flash';
 
 // Formato admitido por Gemini más cercano a la celda impresa del fanzine (74 × 105 mm)
@@ -11,8 +11,9 @@ export const MAX_STORY_TEXT_LENGTH = 400;
 export const STYLE_PROMPT = `
 Style: American comic book style, modern, high contrast, bold black ink lines, halftone patterns.
 The character MUST closely resemble the person in the provided image.
+SKIN TONE IS CRITICAL: Reproduce the person's exact skin tone and undertone from the photo, in full natural color. Never lighten, whiten, desaturate, gray out or tint the skin blue — not even in shadows or under blue lighting. Keep their hair color and facial features too.
 Background: stylized corporate consulting environment (glass offices, city skyline, presentation screens).
-Dominant colors: deep blues (#00338D), medium blues (#005EB8) and teal (#00A3A1) with classic comic black and white.
+Dominant colors for the environment, clothing and lighting ONLY (never the skin): deep blues (#00338D), medium blues (#005EB8) and teal (#00A3A1) with classic comic black ink.
 FILL THE ENTIRE CANVAS: The artwork must bleed fully to every edge — no white margins, no letterboxing, no inner panel frames, no borders of any kind. Every pixel must be part of the scene.
 `;
 
