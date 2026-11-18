@@ -28,8 +28,25 @@ interface ComicPrintViewProps {
 
 export const ComicPrintView: React.FC<ComicPrintViewProps> = ({ comic, userName, onReset }) => {
   const handlePrint = async () => {
-    // Las imágenes de la hoja están ocultas en pantalla: se decodifican antes de abrir el diálogo.
-    await Promise.all(Array.from(document.images).map((image) => image.decode().catch(() => undefined)));
+    // Las imágenes de la hoja están ocultas en pantalla: se intenta decodificarlas
+    // antes de abrir el diálogo. Si alguna se cuelga, no bloqueamos la impresión.
+    const DECODE_TIMEOUT_MS = 2500;
+    await Promise.all(
+      Array.from(document.images).map(
+        (image) =>
+          new Promise<void>((resolve) => {
+            const done = () => resolve();
+            const timer = window.setTimeout(done, DECODE_TIMEOUT_MS);
+            image
+              .decode()
+              .catch(() => undefined)
+              .finally(() => {
+                window.clearTimeout(timer);
+                done();
+              });
+          })
+      )
+    );
     window.print();
   };
 
@@ -48,10 +65,10 @@ export const ComicPrintView: React.FC<ComicPrintViewProps> = ({ comic, userName,
           </h1>
           <div className="w-full space-y-2">
             <div className="grid w-full grid-cols-2 gap-2">
-              <Button onClick={onReset} variant="danger" className="w-full !text-xs !py-2 !px-3 !shadow-none !border-2">
+              <Button type="button" onClick={onReset} variant="danger" className="w-full !text-xs !py-2 !px-3 !shadow-none !border-2">
               <RefreshCcw className="mr-1 w-4 h-4" /> REINICIAR
               </Button>
-              <Button onClick={handlePrint} variant="primary" className="w-full !text-xs !py-2 !px-3 !shadow-none !border-2">
+              <Button type="button" onClick={() => { void handlePrint(); }} variant="primary" className="w-full !text-xs !py-2 !px-3 !shadow-none !border-2">
               <Printer className="mr-1 w-4 h-4" /> IMPRIMIR COMIC
               </Button>
             </div>
