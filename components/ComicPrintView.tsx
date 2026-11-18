@@ -65,10 +65,10 @@ export const ComicPrintView: React.FC<ComicPrintViewProps> = ({ comic, userName,
           </h1>
           <div className="w-full space-y-2">
             <div className="grid w-full grid-cols-2 gap-2">
-              <Button type="button" onClick={onReset} variant="danger" className="w-full !text-xs !py-2 !px-3 !shadow-none !border-2">
+              <Button onClick={onReset} variant="danger" className="w-full !text-xs !py-2 !px-3 !shadow-none !border-2">
               <RefreshCcw className="mr-1 w-4 h-4" /> REINICIAR
               </Button>
-              <Button type="button" onClick={() => { void handlePrint(); }} variant="primary" className="w-full !text-xs !py-2 !px-3 !shadow-none !border-2">
+              <Button onClick={handlePrint} variant="primary" className="w-full !text-xs !py-2 !px-3 !shadow-none !border-2">
               <Printer className="mr-1 w-4 h-4" /> IMPRIMIR COMIC
               </Button>
             </div>
