@@ -14,7 +14,7 @@ import { Button } from './Button';
 
 /** Páginas 5 y 6 del fanzine (no generadas por IA): gráficas de marca / evento */
 const FANZINE_PAGE_5_SRC = '/fanzine/page-make-history-together.jpg';
-const FANZINE_PAGE_6_SRC = '/fanzine/page-alumni-madrid.png';
+const FANZINE_PAGE_6_SRC = '/fanzine/page-alumni-bilbao.png';
 
 /** Fondo detrás de viñetas IA con object-contain: lee como “marco” de marca, no como papel roto */
 const PRINT_PANEL_BG =
